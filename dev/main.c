@@ -27,7 +27,7 @@
 #define ADC_RES ADC_RES_12BIT
 
 #define PM_MODE 0
-#define PM_DELAY = 5
+#define PM_DELAY 5
 
 char stack_lux[THREAD_STACKSIZE_MAIN];
 char stack_temp[THREAD_STACKSIZE_MAIN];
