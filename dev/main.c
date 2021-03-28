@@ -50,22 +50,6 @@ dht_t dev;
 
 static void callback_rtc(void *arg) { puts(arg); }
 
-int enable_led(void) {
-    gpio_t pin_out = GPIO_PIN(PORT_B, 5);
-    if (gpio_init(pin_out, GPIO_OUT)) {
-        printf("Error to initialize GPIO_PIN(%d %d)\n", PORT_B, 5);
-        return -1;
-    }
-
-    printf("Set pin to HIGH\n");
-    gpio_set(pin_out);
-    xtimer_sleep(2);
-    printf("Set pin to LOW\n");
-    gpio_clear(pin_out);
-
-    return 0;
-}
-
 void *measure_light(void *arg) {
     (void)arg;
 
@@ -95,7 +79,7 @@ void *measure_light(void *arg) {
 
     avg /= iterations;
     avg = round(avg);
-    printf("Avg: %d\n", avg);
+    printf("Avg: %d\n", avg);                       // TODO: Send this to the IoT core
 
     //puts("THREAD 1 end\n");
     msg_t msg;
@@ -156,7 +140,7 @@ int enable_rgbled(int code) {
         case TEMP_OK: // Green
             gpio_set(pin_yel);
             xtimer_sleep(TEMP_SLEEP_TIME);
-            //gpio_clear(pin_yel);
+            gpio_clear(pin_yel);
             break;
     }
 
@@ -183,10 +167,10 @@ void *measure_temp(void *arg) {
     n = fmt_s16_dfp(hum_s, hum, -1);
     hum_s[n] = '\0';
 
-    printf("DHT values - temp: %s°C - relative humidity: %s%%\n", temp_s, hum_s);
+    printf("DHT values - temp: %s°C - relative humidity: %s%%\n", temp_s, hum_s);   // TODO: Send this to the IoT core
 
-    enable_rgbled(1);
-    //enable_buzzer();
+    enable_rgbled(1);                   // TODO: This has to be triggered by a response from the IoT Core
+    //enable_buzzer();                  // TODO: This has to be triggered by a response from the IoT Core
 
     //puts("THREAD 2 end\n");
     msg_t msg;
