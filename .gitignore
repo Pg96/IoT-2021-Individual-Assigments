@@ -1,3 +1,7 @@
+# Bin folders
+./dev/bin/
+bin/
+
 # Prerequisites
 *.d
 
