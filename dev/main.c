@@ -26,8 +26,13 @@
 #define ADC_IN_USE ADC_LINE(0)
 #define ADC_RES ADC_RES_12BIT
 
+#define LIGHT_ITER 5
+
 #define PM_MODE 0
 #define PM_DELAY 5
+
+#define DELAY1 (1000LU * US_PER_MS) /* 100 ms */
+#define DELAY2 (3000LU * US_PER_MS) /* 100 ms */
 
 char stack_lux[THREAD_STACKSIZE_MAIN];
 char stack_temp[THREAD_STACKSIZE_MAIN];
@@ -44,14 +49,30 @@ void *measure_light(void *arg) {
     int sample = 0;
     int lux = 0;
 
-    sample = adc_sample(ADC_IN_USE, ADC_RES);
-    lux = adc_util_map(sample, ADC_RES, 10, 100);
-    printf("Sampling");
-    if (sample < 0) {
-        printf("ADC_LINE(%u): selected resolution not applicable\n", ADC_IN_USE);
-    } else {
-        printf("ADC_LINE(%u): raw value: %i, lux: %i\n", ADC_IN_USE, sample, lux);
+    xtimer_ticks32_t last = xtimer_now();
+
+    int avg = 0;
+    const int iterations = LIGHT_ITER;
+    int i = 0;
+
+    while(i < iterations) {
+        sample = adc_sample(ADC_IN_USE, ADC_RES);
+        lux = adc_util_map(sample, ADC_RES, 10, 100);
+        printf("Sampling");
+        if (sample < 0) {
+            printf("ADC_LINE(%u): selected resolution not applicable\n", ADC_IN_USE);
+        } else {
+            printf("ADC_LINE(%u): raw value: %i, lux: %i\n", ADC_IN_USE, sample, lux);
+            
+            avg += lux;
+        }
+        i++;
+        xtimer_periodic_wakeup(&last, DELAY1);
     }
+
+    avg /= iterations;
+
+    printf("%d\n", avg);
 
     //puts("THREAD 1 end\n");
     msg_t msg;
@@ -138,12 +159,12 @@ int main(void) {
     tmain = thread_getpid();
 
     /* Measure the ambient light on a different thead in order to concurrently
-   * measure the temperature. */
+   * measure the temperature and use the corresponding actuator(s). */
     t1 = thread_create(stack_lux, sizeof(stack_lux), THREAD_PRIORITY_MAIN - 1,
                        THREAD_CREATE_STACKTEST, measure_light, NULL, "light_check");
 
     /* Measure the ambient temperature on a different thead in order to
-   * concurrently measure the temperature. */
+   * concurrently measure the temperature and use the corresponding actuator(s). */
     t2 = thread_create(stack_temp, sizeof(stack_temp), THREAD_PRIORITY_MAIN - 3,
                        THREAD_CREATE_STACKTEST, measure_temp, NULL, "temp_check");
 
@@ -152,7 +173,7 @@ int main(void) {
 
     msg_t msg1, msg2;
 
-    // Wait for the 2 threads to return
+    // Wait for the 2 threads to finish their execution
     msg_receive(&msg1);
     //puts("msg1 received\n");
     msg_receive(&msg2);
