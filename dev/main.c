@@ -27,15 +27,14 @@
 #define ADC_IN_USE ADC_LINE(0)
 #define ADC_RES ADC_RES_12BIT
 
-#define LIGHT_ITER 5
+#define LIGHT_ITER 5                /* Light measurement - number of iterations */
 
-#define PM_MODE 0
-#define PM_DELAY 5
+#define PM_MODE 0                   /* Power  Management mode */
+#define PM_DELAY 5                  /* Power Management Wake-up delay */
 
 #define DELAY1 (1000LU * US_PER_MS) /* 100 ms */
-#define DELAY2 (3000LU * US_PER_MS) /* 100 ms */
 
-#define TEMP_SLEEP_TIME 2
+#define TEMP_SLEEP_TIME 2           /* Determines the duration of the LED & buzzer actuators actions */ 
 
 #define TEMP_TOO_LOW 1
 #define TEMP_TOO_HIGH 0
@@ -83,12 +82,13 @@ void *measure_light(void *arg) {
 
     //puts("THREAD 1 end\n");
     msg_t msg;
+    /* Signal to the main thread that this thread's execution has finished */
     msg_send(&msg, tmain);
 
     return NULL;
 }
 
-int enable_buzzer(void) {
+int toggle_buzzer(void) {
     gpio_t pin_out = GPIO_PIN(PORT_B, 5);
     if (gpio_init(pin_out, GPIO_OUT)) {
         printf("Error to initialize GPIO_PIN(%d %d)\n", PORT_B, 5);
@@ -106,7 +106,7 @@ int enable_buzzer(void) {
     return 0;
 }
 
-int enable_rgbled(int code) {
+int toggle_rgbled(int code) {
     gpio_t pin_org = GPIO_PIN(PORT_B, 6);  // R
     gpio_t pin_yel = GPIO_PIN(PORT_C, 7);  // G
     gpio_t pin_blu = GPIO_PIN(PORT_A, 9);  // B
@@ -169,10 +169,12 @@ void *measure_temp(void *arg) {
 
     printf("DHT values - temp: %s°C - relative humidity: %s%%\n", temp_s, hum_s);   // TODO: Send this to the IoT core
 
-    enable_rgbled(1);                   // TODO: This has to be triggered by a response from the IoT Core
-    //enable_buzzer();                  // TODO: This has to be triggered by a response from the IoT Core
+    toggle_rgbled(1);                   // TODO: This has to be triggered by a response from the IoT Core
+    //toggle_buzzer();                  // TODO: This has to be triggered by a response from the IoT Core
 
     //puts("THREAD 2 end\n");
+
+    /* Signal to the main thread that this thread's execution has finished */
     msg_t msg;
     msg_send(&msg, tmain);
 
@@ -246,6 +248,7 @@ int main(void) {
     msg_receive(&msg2);
     //puts("msg2 received\n");
 
+    // POWER SAVING MODE
     /* Set an RTC-based alarm to trigger wakeup */
     const int mode = PM_MODE;
     const int delay = PM_DELAY;
