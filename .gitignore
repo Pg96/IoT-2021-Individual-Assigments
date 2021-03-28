@@ -1,6 +1,7 @@
 # Bin folders
 ./dev/bin/
 bin/
+.vscode/
 
 # Prerequisites
 *.d
