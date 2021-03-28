@@ -8,6 +8,7 @@
  * @}
  */
 
+#include <math.h>
 #include <stdio.h>
 
 #include "analog_util.h"
@@ -43,6 +44,65 @@ dht_t dev;
 
 static void callback_rtc(void *arg) { puts(arg); }
 
+int enable_led(void) {
+    gpio_t pin_out = GPIO_PIN(PORT_B, 5);
+    if (gpio_init(pin_out, GPIO_OUT)) {
+        printf("Error to initialize GPIO_PIN(%d %d)\n", PORT_B, 5);
+        return -1;
+    }
+
+    printf("Set pin to HIGH\n");
+    gpio_set(pin_out);
+    xtimer_sleep(2);
+    printf("Set pin to LOW\n");
+    gpio_clear(pin_out);
+
+    return 0;
+}
+
+int enable_rgbled(int code) {
+    gpio_t pin_org = GPIO_PIN(PORT_B, 6);  // R
+    gpio_t pin_yel = GPIO_PIN(PORT_C, 7);  // G
+    gpio_t pin_blu = GPIO_PIN(PORT_A, 9);  // B
+
+    printf("Trying to initialize leds\n");
+
+    if (gpio_init(pin_org, GPIO_OUT)) {
+        printf("Error to initialize GPIO_PIN(%d %d)\n", PORT_B, 6);
+        return -1;
+    }
+    if (gpio_init(pin_yel, GPIO_OUT)) {
+        printf("Error to initialize GPIO_PIN(%d %d)\n", PORT_C, 7);
+        return -1;
+    }
+    if (gpio_init(pin_blu, GPIO_OUT)) {
+        printf("Error to initialize GPIO_PIN(%d %d)\n", PORT_A, 9);
+        return -1;
+    }
+
+    switch (code) {
+        case 0:  // Red
+            gpio_set(pin_org);
+            xtimer_sleep(2);
+            gpio_clear(pin_org);
+            break;
+        case 1:  // Yellow
+            gpio_set(pin_org);
+            gpio_set(pin_yel);
+            xtimer_sleep(2);
+            gpio_clear(pin_org);
+            gpio_clear(pin_yel);
+            break;
+        case 2:
+            gpio_set(pin_yel);
+            xtimer_sleep(2);
+            //gpio_clear(pin_yel);
+            break;
+    }
+
+    return 0;
+}
+
 void *measure_light(void *arg) {
     (void)arg;
 
@@ -55,7 +115,7 @@ void *measure_light(void *arg) {
     const int iterations = LIGHT_ITER;
     int i = 0;
 
-    while(i < iterations) {
+    while (i < iterations) {
         sample = adc_sample(ADC_IN_USE, ADC_RES);
         lux = adc_util_map(sample, ADC_RES, 10, 100);
         printf("Sampling");
@@ -63,7 +123,7 @@ void *measure_light(void *arg) {
             printf("ADC_LINE(%u): selected resolution not applicable\n", ADC_IN_USE);
         } else {
             printf("ADC_LINE(%u): raw value: %i, lux: %i\n", ADC_IN_USE, sample, lux);
-            
+
             avg += lux;
         }
         i++;
@@ -71,8 +131,8 @@ void *measure_light(void *arg) {
     }
 
     avg /= iterations;
-
-    printf("%d\n", avg);
+    avg = round(avg);
+    printf("Avg: %d\n", avg);
 
     //puts("THREAD 1 end\n");
     msg_t msg;
@@ -102,6 +162,8 @@ void *measure_temp(void *arg) {
     hum_s[n] = '\0';
 
     printf("DHT values - temp: %s°C - relative humidity: %s%%\n", temp_s, hum_s);
+
+    enable_rgbled(2);
 
     //puts("THREAD 2 end\n");
     msg_t msg;
@@ -137,8 +199,6 @@ int init_sensors(void) {
 
     return res;
 }
-
-
 
 int main(void) {
     /** IoT 2021 -- Individual assigment

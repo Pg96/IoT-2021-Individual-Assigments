@@ -20,6 +20,7 @@ USEMODULE += xtimer
 USEMODULE += analog_util
 USEMODULE += dht
 USEMODULE += fmt
+USEMODULE += periph_gpio
 # USEMODULE += pm
 
 FEATURES_OPTIONAL += periph_rtc
