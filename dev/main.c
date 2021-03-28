@@ -35,6 +35,12 @@
 #define DELAY1 (1000LU * US_PER_MS) /* 100 ms */
 #define DELAY2 (3000LU * US_PER_MS) /* 100 ms */
 
+#define TEMP_SLEEP_TIME 2
+
+#define TEMP_TOO_LOW 1
+#define TEMP_TOO_HIGH 0
+#define TEMP_OK 2
+
 char stack_lux[THREAD_STACKSIZE_MAIN];
 char stack_temp[THREAD_STACKSIZE_MAIN];
 
@@ -56,49 +62,6 @@ int enable_led(void) {
     xtimer_sleep(2);
     printf("Set pin to LOW\n");
     gpio_clear(pin_out);
-
-    return 0;
-}
-
-int enable_rgbled(int code) {
-    gpio_t pin_org = GPIO_PIN(PORT_B, 6);  // R
-    gpio_t pin_yel = GPIO_PIN(PORT_C, 7);  // G
-    gpio_t pin_blu = GPIO_PIN(PORT_A, 9);  // B
-
-    printf("Trying to initialize leds\n");
-
-    if (gpio_init(pin_org, GPIO_OUT)) {
-        printf("Error to initialize GPIO_PIN(%d %d)\n", PORT_B, 6);
-        return -1;
-    }
-    if (gpio_init(pin_yel, GPIO_OUT)) {
-        printf("Error to initialize GPIO_PIN(%d %d)\n", PORT_C, 7);
-        return -1;
-    }
-    if (gpio_init(pin_blu, GPIO_OUT)) {
-        printf("Error to initialize GPIO_PIN(%d %d)\n", PORT_A, 9);
-        return -1;
-    }
-
-    switch (code) {
-        case 0:  // Red
-            gpio_set(pin_org);
-            xtimer_sleep(2);
-            gpio_clear(pin_org);
-            break;
-        case 1:  // Yellow
-            gpio_set(pin_org);
-            gpio_set(pin_yel);
-            xtimer_sleep(2);
-            gpio_clear(pin_org);
-            gpio_clear(pin_yel);
-            break;
-        case 2:
-            gpio_set(pin_yel);
-            xtimer_sleep(2);
-            //gpio_clear(pin_yel);
-            break;
-    }
 
     return 0;
 }
@@ -141,6 +104,65 @@ void *measure_light(void *arg) {
     return NULL;
 }
 
+int enable_buzzer(void) {
+    gpio_t pin_out = GPIO_PIN(PORT_B, 5);
+    if (gpio_init(pin_out, GPIO_OUT)) {
+        printf("Error to initialize GPIO_PIN(%d %d)\n", PORT_B, 5);
+        return -1;
+    }
+
+    // Turn on the buzzer
+    gpio_set(pin_out);
+
+    xtimer_sleep(TEMP_SLEEP_TIME);
+
+    // Turn off the buzzer
+    gpio_clear(pin_out);
+
+    return 0;
+}
+
+int enable_rgbled(int code) {
+    gpio_t pin_org = GPIO_PIN(PORT_B, 6);  // R
+    gpio_t pin_yel = GPIO_PIN(PORT_C, 7);  // G
+    gpio_t pin_blu = GPIO_PIN(PORT_A, 9);  // B
+
+    printf("Trying to initialize leds\n");
+
+    if (gpio_init(pin_org, GPIO_OUT)) {
+        printf("Error to initialize GPIO_PIN(%d %d)\n", PORT_B, 6);
+        return -1;
+    }
+    if (gpio_init(pin_yel, GPIO_OUT)) {
+        printf("Error to initialize GPIO_PIN(%d %d)\n", PORT_C, 7);
+        return -1;
+    }
+    if (gpio_init(pin_blu, GPIO_OUT)) {
+        printf("Error to initialize GPIO_PIN(%d %d)\n", PORT_A, 9);
+        return -1;
+    }
+
+    switch (code) {
+        case TEMP_TOO_HIGH:  // Red
+            gpio_set(pin_org);
+            xtimer_sleep(TEMP_SLEEP_TIME);
+            gpio_clear(pin_org);
+            break;
+        case TEMP_TOO_LOW:  // Blue
+            gpio_set(pin_blu);
+            xtimer_sleep(TEMP_SLEEP_TIME);
+            gpio_clear(pin_yel);
+            break;
+        case TEMP_OK: // Green
+            gpio_set(pin_yel);
+            xtimer_sleep(TEMP_SLEEP_TIME);
+            //gpio_clear(pin_yel);
+            break;
+    }
+
+    return 0;
+}
+
 void *measure_temp(void *arg) {
     (void)arg;
 
@@ -163,7 +185,8 @@ void *measure_temp(void *arg) {
 
     printf("DHT values - temp: %s°C - relative humidity: %s%%\n", temp_s, hum_s);
 
-    enable_rgbled(2);
+    enable_rgbled(1);
+    //enable_buzzer();
 
     //puts("THREAD 2 end\n");
     msg_t msg;
