@@ -288,8 +288,8 @@ void *measure_light(void *arg) {
     char lux_str[40];
     sprintf(lux_str, "{\"id\":\"%s\",\"lux\":\"%d\"}}",EMCUTE_ID, avg);
     puts("Publishing lux avg");
-    pub(MQTT_TOPIC, lux_str, 0);
-    printf("Avg: %d\n", avg);  // TODO: Send this to the IoT core
+    pub(MQTT_TOPIC, lux_str, 0);    // TODO: Move to main
+    printf("Avg: %d\n", avg); 
 
 
     if (avg < 20)               // TODO: This should be performed by the IoT Core
@@ -472,6 +472,10 @@ int main(void) {
         //puts("msg1 received\n");
         msg_receive(&msg2);
         //puts("msg2 received\n");
+
+        //TODO: collect all messages here (Lux & Temp) & publish them to MQTT-SN
+
+        //TODO: Code to trigger actuators based on IoT core replies 
 
         xtimer_periodic_wakeup(&last, DELAY);
     }
