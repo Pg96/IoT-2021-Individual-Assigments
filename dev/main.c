@@ -272,19 +272,16 @@ void *measure_light(void *arg) {
 
     avg /= iterations;
     avg = round(avg);
-    printf("AVG: %d\n", avg);
+    uint32_t uavg = avg;
 
-    if (avg < 20)  // TODO: This should be performed by the IoT Core
-        toggle_lamp(LAMP_ON);
-    else
-        toggle_lamp(LAMP_OFF);
+    // if (avg < 20)  // TODO: This should be performed by the IoT Core
+    //     toggle_lamp(LAMP_ON);
+    // else
+    //     toggle_lamp(LAMP_OFF);
 
-    xtimer_sleep(TEMP_SLEEP_TIME);
-
-    //puts("THREAD 1 end\n");
     msg_t msg;
     /* Signal to the main thread that this thread's execution has finished */
-    msg.content.value = avg;
+    msg.content.value = uavg;
     msg_send(&msg, tmain);
 
     return NULL;
@@ -358,27 +355,29 @@ void *measure_temp(void *arg) {
     if (dht_read(&dev, &temp, &hum) != DHT_OK) {
         printf("An error occurred while reading values\n");
     }
-
+    
     /* Extract + format temperature from sensor reading */
     char temp_s[10];
     size_t n = fmt_s16_dfp(temp_s, temp, -1);
     temp_s[n] = '\0';
+
+    uint32_t utemp = atoi(temp_s);
 
     /* Extract + format humidity from sensor reading */
     char hum_s[10];
     n = fmt_s16_dfp(hum_s, hum, -1);
     hum_s[n] = '\0';
 
-    printf("DHT values - temp: %s°C - relative humidity: %s%%\n", temp_s, hum_s);  // TODO: Send this to the IoT core
+    printf("DHT values - temp: %s°C - relative humidity: %s%%\n", temp_s, hum_s);
 
-    toggle_rgbled(1);  // TODO: This has to be triggered by a response from the IoT Core
+    //toggle_rgbled(1);  // TODO: This has to be triggered by a response from the IoT Core
     //toggle_buzzer();                  // TODO: This has to be triggered by a response from the IoT Core
 
     //puts("THREAD 2 end\n");
 
     /* Signal to the main thread that this thread's execution has finished */
     msg_t msg;
-    msg.content.value = temp;
+    msg.content.value = utemp;
     msg_send(&msg, tmain);
 
     return NULL;
@@ -452,22 +451,35 @@ int main(void) {
         //printf("%hd\t%hd\t%hd\n", tmain, t1, t2);
 
         msg_t msg1, msg2;
-
+        
+        uint32_t lux = 0;
+        uint32_t temp = 0;
         // Wait for the 2 threads to finish their execution
         msg_receive(&msg1);
+        if(msg1.sender_pid == t1) { //Message coming from light measurer
+            lux = msg1.content.value;
+        }
+        else {
+            temp = msg1.content.value;
+        }
+
         //puts("msg1 received\n");
-        int lux_avg = msg1.content.value;
-        printf("LUX: %d\n", lux_avg);
         msg_receive(&msg2);
-        printf("TEMP: %ld\n", msg2.content.value);
+        if (msg2.sender_pid == t2) { // Message coming from temperature measurer
+            temp = msg2.content.value;
+        }
+        else {
+            lux = msg2.content.value;
+        }
+
+        printf("LUX: %lu\n", lux);
+        printf("TEMP: %lu\n", temp);
         //puts("msg2 received\n");
 
-        char lux_str[40];
-        sprintf(lux_str, "{\"id\":\"%s\",\"lux\":\"%d\"}}", EMCUTE_ID, lux_avg);
+        char core_str[40];
+        sprintf(core_str, "{\"id\":\"%s\",\"lux\":\"%lu\",\"temp\":\"%lu\"}}", EMCUTE_ID, lux, temp);
         puts("Publishing lux avg");
-        pub(MQTT_TOPIC, lux_str, 0);  // TODO: Move to main
-
-        //TODO: collect all messages here (Lux & Temp) & publish them to MQTT-SN
+        pub(MQTT_TOPIC, core_str, 0); 
 
         //TODO: Code to trigger actuators based on IoT core replies
 
