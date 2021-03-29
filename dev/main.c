@@ -56,7 +56,7 @@ dht_t dev;
 int toggle_lamp(int code) {
     gpio_t pin_out = GPIO_PIN(PORT_A, 8);
     if (gpio_init(pin_out, GPIO_OUT)) {
-        printf("Error to initialize GPIO_PIN(%d %d)\n", PORT_B, 5);
+        printf("An error occurred while trying to initialize GPIO_PIN(%d %d)\n", PORT_B, 5);
         return -1;
     }
 
@@ -99,7 +99,7 @@ void *measure_light(void *arg) {
     avg = round(avg);
     printf("Avg: %d\n", avg);  // TODO: Send this to the IoT core
 
-    if (avg < 20)
+    if (avg < 20)               // TODO: This should be performed by the IoT Core
         toggle_lamp(LAMP_ON);
     else
         toggle_lamp(LAMP_OFF);
@@ -117,7 +117,7 @@ void *measure_light(void *arg) {
 int toggle_buzzer(void) {
     gpio_t pin_out = GPIO_PIN(PORT_B, 5);
     if (gpio_init(pin_out, GPIO_OUT)) {
-        printf("Error to initialize GPIO_PIN(%d %d)\n", PORT_B, 5);
+        printf("An error occurred while trying to initialize GPIO_PIN(%d %d)\n", PORT_B, 5);
         return -1;
     }
 
@@ -140,15 +140,15 @@ int toggle_rgbled(int code) {
     printf("Trying to initialize leds\n");
 
     if (gpio_init(pin_org, GPIO_OUT)) {
-        printf("Error to initialize GPIO_PIN(%d %d)\n", PORT_B, 6);
+        printf("An error occurred while trying to initialize GPIO_PIN(%d %d)\n", PORT_B, 6);
         return -1;
     }
     if (gpio_init(pin_yel, GPIO_OUT)) {
-        printf("Error to initialize GPIO_PIN(%d %d)\n", PORT_C, 7);
+        printf("An error occurred while trying to initialize GPIO_PIN(%d %d)\n", PORT_C, 7);
         return -1;
     }
     if (gpio_init(pin_blu, GPIO_OUT)) {
-        printf("Error to initialize GPIO_PIN(%d %d)\n", PORT_A, 9);
+        printf("An error occurred while trying to initialize GPIO_PIN(%d %d)\n", PORT_A, 9);
         return -1;
     }
 
@@ -180,7 +180,7 @@ void *measure_temp(void *arg) {
     int16_t temp, hum;
 
     if (dht_read(&dev, &temp, &hum) != DHT_OK) {
-        printf("Error reading values\n");
+        printf("An error occurred while reading values\n");
     }
 
     /* Extract + format temperature from sensor reading */
@@ -212,7 +212,7 @@ int init_sensors(void) {
 
     /* initialize the ADC line */
     if (adc_init(ADC_IN_USE) < 0) {
-        printf("Initialization of ADC_LINE(%u) failed\n", ADC_IN_USE);
+        printf("The attempt to initialize ADC_LINE(%u) failed\n", ADC_IN_USE);
         res |= 1;
     } else {
         printf("Successfully initialized ADC_LINE(%u)\n", ADC_IN_USE);
