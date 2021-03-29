@@ -10,11 +10,13 @@
 
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "analog_util.h"
 #include "dht.h"
 #include "dht_params.h"
 #include "fmt.h"
+#include "jsmn.h"
 #include "msg.h"
 #include "net/emcute.h"
 #include "net/ipv6/addr.h"
@@ -25,6 +27,8 @@
 #include "shell.h"
 #include "thread.h"
 #include "xtimer.h"
+
+#define JSMN_HEADER
 
 /* Sensors Section */
 #define ADC_IN_USE ADC_LINE(0)
@@ -44,8 +48,8 @@
 #define TEMP_TOO_HIGH 0
 #define TEMP_OK 2
 
-#define LAMP_ON 0
-#define LAMP_OFF 1
+#define LAMP_ON 1
+#define LAMP_OFF 0
 
 /* MQTT SECTION */
 #ifndef EMCUTE_ID
@@ -80,15 +84,93 @@ static void *emcute_thread(void *arg) {
     return NULL; /* should never be reached */
 }
 
+int toggle_lamp(int code);
+int toggle_rgbled(int code);
+
+/* Parse the reply from the IoT Core*/
+int parse_command(char *command) {
+    jsmn_parser parser;
+    jsmntok_t tokens[4];
+
+    jsmn_init(&parser);
+
+    int r = jsmn_parse(&parser, command, strlen(command), tokens, 10);
+
+    if (r < 0) {
+        printf("Failed to parse JSON: %d\n", r);
+        return 1;
+    }
+    if (r < 1 || tokens[0].type != JSMN_OBJECT) {
+        printf("Object expected\n");
+        return 2;
+    }
+
+    // JSON STRUCT: {"lux":"0|1", "led":"0|1|2"}
+    for (int i = 1; i < 4; i += 2) {
+        jsmntok_t key = tokens[i];
+        unsigned int length = key.end - key.start;
+        char keyString[length + 1];
+        memcpy(keyString, &command[key.start], length);
+        keyString[length] = '\0';
+        printf("Key: %s\n", keyString);
+
+        if (strcmp(keyString, "lux") == 0) {
+            puts("LUX");
+            jsmntok_t key = tokens[i + 1];
+            unsigned int length = key.end - key.start;
+            char keyString[length + 1];
+            memcpy(keyString, &command[key.start], length);
+            keyString[length] = '\0';
+            printf("Val: %s\n", keyString);
+
+            int val = atoi(keyString);
+
+            if (val < 0 || val > 1) {
+                printf("An invalid value was supplied for lux: %d", val);
+                return 4;
+            }
+
+            toggle_lamp(val);
+        } else if (strcmp(keyString, "led") == 0) {
+            puts("LED");
+            jsmntok_t key = tokens[i + 1];
+            unsigned int length = key.end - key.start;
+            char keyString[length + 1];
+            memcpy(keyString, &command[key.start], length);
+            keyString[length] = '\0';
+            printf("Val: %s\n", keyString);
+
+            int val = atoi(keyString);
+
+            if (val < 0 || val > 2) {
+                printf("An invalid value was supplied for temp: %d", val);
+                return 5;
+            }
+
+            toggle_rgbled(val);
+        }
+    }
+    return 0;
+}
+
 static void on_pub(const emcute_topic_t *topic, void *data, size_t len) {
     char *in = (char *)data;
+
+    char comm[len + 1];
 
     printf("### got publication for topic '%s' [%i] ###\n",
            topic->name, (int)topic->id);
     for (size_t i = 0; i < len; i++) {
-        printf("%c", in[i]);
+        //printf("%c", in[i]);
+
+        comm[i] = in[i];
     }
-    puts("");
+    comm[len] = '\0';
+
+    printf("%s\n", comm);
+
+    parse_command(comm);
+    //puts("");
 }
 
 static uint8_t get_prefix_len(char *addr) {
@@ -249,8 +331,6 @@ void *measure_light(void *arg) {
     int sample = 0;
     int lux = 0;
 
-    //xtimer_ticks32_t last = xtimer_now();
-
     int avg = 0;
     const int iterations = LIGHT_ITER;
     int i = 0;
@@ -273,11 +353,6 @@ void *measure_light(void *arg) {
     avg /= iterations;
     avg = round(avg);
     uint32_t uavg = avg;
-
-    // if (avg < 20)  // TODO: This should be performed by the IoT Core
-    //     toggle_lamp(LAMP_ON);
-    // else
-    //     toggle_lamp(LAMP_OFF);
 
     msg_t msg;
     /* Signal to the main thread that this thread's execution has finished */
@@ -310,7 +385,7 @@ int toggle_rgbled(int code) {
     gpio_t pin_yel = GPIO_PIN(PORT_C, 7);  // G
     gpio_t pin_blu = GPIO_PIN(PORT_A, 9);  // B
 
-    printf("Trying to initialize leds\n");  // TODO: With the current conf (while on main), might even move this away
+    printf("Trying to initialize leds\n");  // With the current conf (while on main), might even move this away
 
     if (gpio_init(pin_org, GPIO_OUT)) {
         printf("An error occurred while trying to initialize GPIO_PIN(%d %d)\n", PORT_B, 6);
@@ -325,21 +400,22 @@ int toggle_rgbled(int code) {
         return -1;
     }
 
+    /* Clear the colors before setting them again */
+    gpio_clear(pin_org);
+    gpio_clear(pin_yel);
+    gpio_clear(pin_yel);
+
     switch (code) {
         case TEMP_TOO_HIGH:  // Red
             gpio_set(pin_org);
-            xtimer_sleep(TEMP_SLEEP_TIME);
-            gpio_clear(pin_org);
+            toggle_buzzer();
             break;
         case TEMP_TOO_LOW:  // Blue
             gpio_set(pin_blu);
-            xtimer_sleep(TEMP_SLEEP_TIME);
-            gpio_clear(pin_yel);
+            toggle_buzzer();
             break;
         case TEMP_OK:  // Green
             gpio_set(pin_yel);
-            xtimer_sleep(TEMP_SLEEP_TIME);
-            gpio_clear(pin_yel);
             break;
     }
 
@@ -355,25 +431,25 @@ void *measure_temp(void *arg) {
     if (dht_read(&dev, &temp, &hum) != DHT_OK) {
         printf("An error occurred while reading values\n");
     }
-    
+
     /* Extract + format temperature from sensor reading */
     char temp_s[10];
     size_t n = fmt_s16_dfp(temp_s, temp, -1);
     temp_s[n] = '\0';
 
-    uint32_t utemp = atoi(temp_s);
-
+    int dtemp = atoi(temp_s);
+    uint32_t utemp;
+    if (dtemp <= 0) {  /*treat negative temperatures as inadmissible (room temperature <= 0 is LOW) */
+        utemp = 0;
+    } else {
+        utemp = dtemp;
+    }
     /* Extract + format humidity from sensor reading */
     char hum_s[10];
     n = fmt_s16_dfp(hum_s, hum, -1);
     hum_s[n] = '\0';
 
     printf("DHT values - temp: %s°C - relative humidity: %s%%\n", temp_s, hum_s);
-
-    //toggle_rgbled(1);  // TODO: This has to be triggered by a response from the IoT Core
-    //toggle_buzzer();                  // TODO: This has to be triggered by a response from the IoT Core
-
-    //puts("THREAD 2 end\n");
 
     /* Signal to the main thread that this thread's execution has finished */
     msg_t msg;
@@ -451,24 +527,22 @@ int main(void) {
         //printf("%hd\t%hd\t%hd\n", tmain, t1, t2);
 
         msg_t msg1, msg2;
-        
+
         uint32_t lux = 0;
         uint32_t temp = 0;
         // Wait for the 2 threads to finish their execution
         msg_receive(&msg1);
-        if(msg1.sender_pid == t1) { //Message coming from light measurer
+        if (msg1.sender_pid == t1) {  //Message coming from light measurer
             lux = msg1.content.value;
-        }
-        else {
+        } else {
             temp = msg1.content.value;
         }
 
         //puts("msg1 received\n");
         msg_receive(&msg2);
-        if (msg2.sender_pid == t2) { // Message coming from temperature measurer
+        if (msg2.sender_pid == t2) {  // Message coming from temperature measurer
             temp = msg2.content.value;
-        }
-        else {
+        } else {
             lux = msg2.content.value;
         }
 
@@ -478,10 +552,7 @@ int main(void) {
 
         char core_str[40];
         sprintf(core_str, "{\"id\":\"%s\",\"lux\":\"%lu\",\"temp\":\"%lu\"}}", EMCUTE_ID, lux, temp);
-        puts("Publishing lux avg");
-        pub(MQTT_TOPIC, core_str, 0); 
-
-        //TODO: Code to trigger actuators based on IoT core replies
+        pub(MQTT_TOPIC, core_str, 0);
 
         xtimer_periodic_wakeup(&last, DELAY);
     }
