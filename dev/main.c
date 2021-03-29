@@ -40,6 +40,9 @@
 #define TEMP_TOO_HIGH 0
 #define TEMP_OK 2
 
+#define LAMP_ON 0
+#define LAMP_OFF 1
+
 char stack_lux[THREAD_STACKSIZE_MAIN];
 char stack_temp[THREAD_STACKSIZE_MAIN];
 
@@ -48,6 +51,21 @@ kernel_pid_t tmain, t1, t2;
 dht_t dev;
 
 static void callback_rtc(void *arg) { puts(arg); }
+
+int toggle_lamp(int code) {
+    gpio_t pin_out = GPIO_PIN(PORT_A, 8);
+    if (gpio_init(pin_out, GPIO_OUT)) {
+        printf("Error to initialize GPIO_PIN(%d %d)\n", PORT_B, 5);
+        return -1;
+    }
+
+    if (code == LAMP_ON)
+        gpio_set(pin_out);
+    else
+        gpio_clear(pin_out);
+    
+    return 1;
+}
 
 void *measure_light(void *arg) {
     (void)arg;
@@ -73,12 +91,20 @@ void *measure_light(void *arg) {
             avg += lux;
         }
         i++;
-        xtimer_periodic_wakeup(&last, DELAY1);
+        xtimer_periodic_wakeup(&last, DELAY1);      // TODO: Replace this with a normal sleep
     }
 
     avg /= iterations;
     avg = round(avg);
     printf("Avg: %d\n", avg);                       // TODO: Send this to the IoT core
+
+    if (avg < 20)
+        toggle_lamp(LAMP_ON);
+    else   
+        toggle_lamp(LAMP_OFF);
+    
+    xtimer_sleep(TEMP_SLEEP_TIME);
+
 
     //puts("THREAD 1 end\n");
     msg_t msg;
