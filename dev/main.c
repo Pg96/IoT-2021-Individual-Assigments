@@ -53,7 +53,7 @@
 
 /* MQTT SECTION */
 #ifndef EMCUTE_ID
-#define EMCUTE_ID ("gertrud")
+#define EMCUTE_ID ("power_saver")
 #endif
 #define EMCUTE_PRIO (THREAD_PRIORITY_MAIN - 1)
 
@@ -87,6 +87,18 @@ static void *emcute_thread(void *arg) {
 int toggle_lamp(int code);
 int toggle_rgbled(int code);
 
+int parse_val(jsmntok_t key, char *command) {
+                unsigned int length = key.end - key.start;
+            char keyString[length + 1];
+            memcpy(keyString, &command[key.start], length);
+            keyString[length] = '\0';
+            printf("Val: %s\n", keyString);
+
+            int val = atoi(keyString);
+
+            return val;
+}
+
 /* Parse the reply from the IoT Core*/
 int parse_command(char *command) {
     jsmn_parser parser;
@@ -112,18 +124,20 @@ int parse_command(char *command) {
         char keyString[length + 1];
         memcpy(keyString, &command[key.start], length);
         keyString[length] = '\0';
-        printf("Key: %s\n", keyString);
+        //printf("Key: %s\n", keyString);
 
         if (strcmp(keyString, "lux") == 0) {
-            puts("LUX");
-            jsmntok_t key = tokens[i + 1];
-            unsigned int length = key.end - key.start;
-            char keyString[length + 1];
-            memcpy(keyString, &command[key.start], length);
-            keyString[length] = '\0';
-            printf("Val: %s\n", keyString);
+            //puts("LUX");
+            // jsmntok_t key = tokens[i + 1];
+            // unsigned int length = key.end - key.start;
+            // char keyString[length + 1];
+            // memcpy(keyString, &command[key.start], length);
+            // keyString[length] = '\0';
+            // printf("Val: %s\n", keyString);
 
-            int val = atoi(keyString);
+            // int val = atoi(keyString);
+
+            int val = parse_val(tokens[i+1], command);
 
             if (val < 0 || val > 1) {
                 printf("An invalid value was supplied for lux: %d", val);
@@ -132,15 +146,17 @@ int parse_command(char *command) {
 
             toggle_lamp(val);
         } else if (strcmp(keyString, "led") == 0) {
-            puts("LED");
-            jsmntok_t key = tokens[i + 1];
-            unsigned int length = key.end - key.start;
-            char keyString[length + 1];
-            memcpy(keyString, &command[key.start], length);
-            keyString[length] = '\0';
-            printf("Val: %s\n", keyString);
+            // puts("LED");
+            // jsmntok_t key = tokens[i + 1];
+            // unsigned int length = key.end - key.start;
+            // char keyString[length + 1];
+            // memcpy(keyString, &command[key.start], length);
+            // keyString[length] = '\0';
+            // printf("Val: %s\n", keyString);
 
-            int val = atoi(keyString);
+            // int val = atoi(keyString);
+
+            int val = parse_val(tokens[i+1], command);
 
             if (val < 0 || val > 2) {
                 printf("An invalid value was supplied for temp: %d", val);
