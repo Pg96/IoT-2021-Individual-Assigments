@@ -26,5 +26,5 @@ USEMODULE += periph_gpio
 FEATURES_OPTIONAL += periph_rtc
 FEATURES_REQUIRED += periph_adc
 
-include $(CURDIR)/../Makefile.ethos.conf
+include $(CURDIR)/Makefile.ethos.conf
 include $(RIOTBASE)/Makefile.include
