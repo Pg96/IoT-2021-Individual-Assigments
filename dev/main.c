@@ -32,7 +32,7 @@
 #define PM_MODE 0  /* Power  Management mode */
 #define PM_DELAY 5 /* Power Management Wake-up delay */
 
-#define DELAY1 (1000LU * US_PER_MS) /* 100 ms */
+#define DELAY (20000LU * US_PER_MS) /* 10 s - Delay between main iterations */
 
 #define TEMP_SLEEP_TIME 2  /* Determines the duration of the LED & buzzer actuators actions */
 #define LIGHT_SLEEP_TIME 1 /* Determines the sleep time among the iterations in the measure_light() loop */
@@ -196,7 +196,7 @@ void *measure_temp(void *arg) {
     printf("DHT values - temp: %s°C - relative humidity: %s%%\n", temp_s, hum_s);  // TODO: Send this to the IoT core
 
     toggle_rgbled(1);  // TODO: This has to be triggered by a response from the IoT Core
-    toggle_buzzer();                  // TODO: This has to be triggered by a response from the IoT Core
+    //toggle_buzzer();                  // TODO: This has to be triggered by a response from the IoT Core
 
     //puts("THREAD 2 end\n");
 
@@ -277,7 +277,7 @@ int main(void) {
         msg_receive(&msg2);
         //puts("msg2 received\n");
 
-        xtimer_periodic_wakeup(&last, DELAY1);
+        xtimer_periodic_wakeup(&last, DELAY);
     }
 
     // POWER SAVING MODE
