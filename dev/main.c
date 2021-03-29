@@ -27,14 +27,15 @@
 #define ADC_IN_USE ADC_LINE(0)
 #define ADC_RES ADC_RES_12BIT
 
-#define LIGHT_ITER 5                /* Light measurement - number of iterations */
+#define LIGHT_ITER 5 /* Light measurement - number of iterations */
 
-#define PM_MODE 0                   /* Power  Management mode */
-#define PM_DELAY 5                  /* Power Management Wake-up delay */
+#define PM_MODE 0  /* Power  Management mode */
+#define PM_DELAY 5 /* Power Management Wake-up delay */
 
 #define DELAY1 (1000LU * US_PER_MS) /* 100 ms */
 
-#define TEMP_SLEEP_TIME 2           /* Determines the duration of the LED & buzzer actuators actions */ 
+#define TEMP_SLEEP_TIME 2  /* Determines the duration of the LED & buzzer actuators actions */
+#define LIGHT_SLEEP_TIME 1 /* Determines the sleep time among the iterations in the measure_light() loop */
 
 #define TEMP_TOO_LOW 1
 #define TEMP_TOO_HIGH 0
@@ -50,7 +51,7 @@ kernel_pid_t tmain, t1, t2;
 
 dht_t dev;
 
-static void callback_rtc(void *arg) { puts(arg); }
+//static void callback_rtc(void *arg) { puts(arg); }
 
 int toggle_lamp(int code) {
     gpio_t pin_out = GPIO_PIN(PORT_A, 8);
@@ -63,7 +64,7 @@ int toggle_lamp(int code) {
         gpio_set(pin_out);
     else
         gpio_clear(pin_out);
-    
+
     return 1;
 }
 
@@ -73,7 +74,7 @@ void *measure_light(void *arg) {
     int sample = 0;
     int lux = 0;
 
-    xtimer_ticks32_t last = xtimer_now();
+    //xtimer_ticks32_t last = xtimer_now();
 
     int avg = 0;
     const int iterations = LIGHT_ITER;
@@ -91,20 +92,19 @@ void *measure_light(void *arg) {
             avg += lux;
         }
         i++;
-        xtimer_periodic_wakeup(&last, DELAY1);      // TODO: Replace this with a normal sleep
+        xtimer_sleep(LIGHT_SLEEP_TIME);
     }
 
     avg /= iterations;
     avg = round(avg);
-    printf("Avg: %d\n", avg);                       // TODO: Send this to the IoT core
+    printf("Avg: %d\n", avg);  // TODO: Send this to the IoT core
 
     if (avg < 20)
         toggle_lamp(LAMP_ON);
-    else   
+    else
         toggle_lamp(LAMP_OFF);
-    
-    xtimer_sleep(TEMP_SLEEP_TIME);
 
+    xtimer_sleep(TEMP_SLEEP_TIME);
 
     //puts("THREAD 1 end\n");
     msg_t msg;
@@ -163,7 +163,7 @@ int toggle_rgbled(int code) {
             xtimer_sleep(TEMP_SLEEP_TIME);
             gpio_clear(pin_yel);
             break;
-        case TEMP_OK: // Green
+        case TEMP_OK:  // Green
             gpio_set(pin_yel);
             xtimer_sleep(TEMP_SLEEP_TIME);
             gpio_clear(pin_yel);
@@ -193,10 +193,10 @@ void *measure_temp(void *arg) {
     n = fmt_s16_dfp(hum_s, hum, -1);
     hum_s[n] = '\0';
 
-    printf("DHT values - temp: %s°C - relative humidity: %s%%\n", temp_s, hum_s);   // TODO: Send this to the IoT core
+    printf("DHT values - temp: %s°C - relative humidity: %s%%\n", temp_s, hum_s);  // TODO: Send this to the IoT core
 
-    toggle_rgbled(1);                   // TODO: This has to be triggered by a response from the IoT Core
-    //toggle_buzzer();                  // TODO: This has to be triggered by a response from the IoT Core
+    toggle_rgbled(1);  // TODO: This has to be triggered by a response from the IoT Core
+    toggle_buzzer();                  // TODO: This has to be triggered by a response from the IoT Core
 
     //puts("THREAD 2 end\n");
 
@@ -253,42 +253,48 @@ int main(void) {
 
     tmain = thread_getpid();
 
-    /* Measure the ambient light on a different thead in order to concurrently
+    xtimer_ticks32_t last = xtimer_now();
+
+    while (1) {
+        /* Measure the ambient light on a different thead in order to concurrently
    * measure the temperature and use the corresponding actuator(s). */
-    t1 = thread_create(stack_lux, sizeof(stack_lux), THREAD_PRIORITY_MAIN - 1,
-                       THREAD_CREATE_STACKTEST, measure_light, NULL, "light_check");
+        t1 = thread_create(stack_lux, sizeof(stack_lux), THREAD_PRIORITY_MAIN - 1,
+                           THREAD_CREATE_STACKTEST, measure_light, NULL, "light_check");
 
-    /* Measure the ambient temperature on a different thead in order to
+        /* Measure the ambient temperature on a different thead in order to
    * concurrently measure the temperature and use the corresponding actuator(s). */
-    t2 = thread_create(stack_temp, sizeof(stack_temp), THREAD_PRIORITY_MAIN - 3,
-                       THREAD_CREATE_STACKTEST, measure_temp, NULL, "temp_check");
+        t2 = thread_create(stack_temp, sizeof(stack_temp), THREAD_PRIORITY_MAIN - 3,
+                           THREAD_CREATE_STACKTEST, measure_temp, NULL, "temp_check");
 
-    puts("THREADS CREATED");
-    //printf("%hd\t%hd\t%hd\n", tmain, t1, t2);
+        puts("THREADS CREATED");
+        //printf("%hd\t%hd\t%hd\n", tmain, t1, t2);
 
-    msg_t msg1, msg2;
+        msg_t msg1, msg2;
 
-    // Wait for the 2 threads to finish their execution
-    msg_receive(&msg1);
-    //puts("msg1 received\n");
-    msg_receive(&msg2);
-    //puts("msg2 received\n");
+        // Wait for the 2 threads to finish their execution
+        msg_receive(&msg1);
+        //puts("msg1 received\n");
+        msg_receive(&msg2);
+        //puts("msg2 received\n");
+
+        xtimer_periodic_wakeup(&last, DELAY1);
+    }
 
     // POWER SAVING MODE
     /* Set an RTC-based alarm to trigger wakeup */
-    const int mode = PM_MODE;
-    const int delay = PM_DELAY;
+    // const int mode = PM_MODE;
+    // const int delay = PM_DELAY;
 
-    printf("Setting wakeup from mode %d in %d seconds.\n", mode, delay);
-    fflush(stdout);
+    // printf("Setting wakeup from mode %d in %d seconds.\n", mode, delay);
+    // fflush(stdout);
 
-    struct tm time;
-    rtc_get_time(&time);
-    time.tm_sec += delay;
-    rtc_set_alarm(&time, callback_rtc, "Wakeup alarm");
+    // struct tm time;
+    // rtc_get_time(&time);
+    // time.tm_sec += delay;
+    // rtc_set_alarm(&time, callback_rtc, "Wakeup alarm");
 
-    /* Enter deep sleep mode */
-    pm_set(mode);
+    // /* Enter deep sleep mode */
+    // pm_set(mode);
 
     return 0;
 }
