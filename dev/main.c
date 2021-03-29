@@ -184,7 +184,7 @@ int setup_mqtt(void) {
     /* start the emcute thread */
     thread_create(stack_emcute, sizeof(stack_emcute), EMCUTE_PRIO, 0, emcute_thread, NULL, "emcute");
     //Adding address to network interface
-    netif_add("4", "fec0:affe::99");
+    netif_add("4", "2001:0db8:0:f101::2");
     // connect to MQTT-SN broker
     printf("Connecting to MQTT-SN broker %s port %d.\n", SERVER_ADDR, SERVER_PORT);
 
@@ -272,12 +272,7 @@ void *measure_light(void *arg) {
 
     avg /= iterations;
     avg = round(avg);
-
-    char lux_str[40];
-    sprintf(lux_str, "{\"id\":\"%s\",\"lux\":\"%d\"}}", EMCUTE_ID, avg);
-    puts("Publishing lux avg");
-    pub(MQTT_TOPIC, lux_str, 0);  // TODO: Move to main
-    printf("Avg: %d\n", avg);
+    printf("AVG: %d\n", avg);
 
     if (avg < 20)  // TODO: This should be performed by the IoT Core
         toggle_lamp(LAMP_ON);
@@ -289,6 +284,7 @@ void *measure_light(void *arg) {
     //puts("THREAD 1 end\n");
     msg_t msg;
     /* Signal to the main thread that this thread's execution has finished */
+    msg.content.value = avg;
     msg_send(&msg, tmain);
 
     return NULL;
@@ -317,7 +313,7 @@ int toggle_rgbled(int code) {
     gpio_t pin_yel = GPIO_PIN(PORT_C, 7);  // G
     gpio_t pin_blu = GPIO_PIN(PORT_A, 9);  // B
 
-    printf("Trying to initialize leds\n");
+    printf("Trying to initialize leds\n");  // TODO: With the current conf (while on main), might even move this away
 
     if (gpio_init(pin_org, GPIO_OUT)) {
         printf("An error occurred while trying to initialize GPIO_PIN(%d %d)\n", PORT_B, 6);
@@ -382,6 +378,7 @@ void *measure_temp(void *arg) {
 
     /* Signal to the main thread that this thread's execution has finished */
     msg_t msg;
+    msg.content.value = temp;
     msg_send(&msg, tmain);
 
     return NULL;
@@ -438,6 +435,8 @@ int main(void) {
 
     xtimer_ticks32_t last = xtimer_now();
 
+    //TODO: IDEA: promote what is below to new thread & add command line(?)
+
     while (1) {
         /* Measure the ambient light on a different thead in order to concurrently
    * measure the temperature and use the corresponding actuator(s). */
@@ -457,8 +456,16 @@ int main(void) {
         // Wait for the 2 threads to finish their execution
         msg_receive(&msg1);
         //puts("msg1 received\n");
+        int lux_avg = msg1.content.value;
+        printf("LUX: %d\n", lux_avg);
         msg_receive(&msg2);
+        printf("TEMP: %ld\n", msg2.content.value);
         //puts("msg2 received\n");
+
+        char lux_str[40];
+        sprintf(lux_str, "{\"id\":\"%s\",\"lux\":\"%d\"}}", EMCUTE_ID, lux_avg);
+        puts("Publishing lux avg");
+        pub(MQTT_TOPIC, lux_str, 0);  // TODO: Move to main
 
         //TODO: collect all messages here (Lux & Temp) & publish them to MQTT-SN
 

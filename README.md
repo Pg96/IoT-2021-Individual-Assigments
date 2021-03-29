@@ -12,6 +12,5 @@ Yellow -> D9
 Orange -> D10
 
 ## TODO
-[ ] MQTT  
 [ ] Cloud IoT Backend  
 [ ] Web dashboard  
