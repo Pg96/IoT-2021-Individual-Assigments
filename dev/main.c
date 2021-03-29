@@ -16,6 +16,8 @@
 #include "dht_params.h"
 #include "fmt.h"
 #include "msg.h"
+#include "net/emcute.h"
+#include "net/ipv6/addr.h"
 #include "periph/adc.h"
 #include "periph/gpio.h"
 #include "periph/pm.h"
@@ -23,8 +25,6 @@
 #include "shell.h"
 #include "thread.h"
 #include "xtimer.h"
-#include "net/emcute.h"
-#include "net/ipv6/addr.h"
 
 /* Sensors Section */
 #define ADC_IN_USE ADC_LINE(0)
@@ -49,14 +49,14 @@
 
 /* MQTT SECTION */
 #ifndef EMCUTE_ID
-#define EMCUTE_ID           ("gertrud")
+#define EMCUTE_ID ("gertrud")
 #endif
-#define EMCUTE_PRIO         (THREAD_PRIORITY_MAIN - 1)
+#define EMCUTE_PRIO (THREAD_PRIORITY_MAIN - 1)
 
-#define _IPV6_DEFAULT_PREFIX_LEN        (64U)
+#define _IPV6_DEFAULT_PREFIX_LEN (64U)
 
-#define NUMOFSUBS           (16U)
-#define TOPIC_MAXLEN        (64U)
+#define NUMOFSUBS (16U)
+#define TOPIC_MAXLEN (64U)
 
 /* [Sensors] Stacks for multi-threading & tids placeholders*/
 char stack_lux[THREAD_STACKSIZE_MAIN];
@@ -74,15 +74,13 @@ static char stack_emcute[THREAD_STACKSIZE_DEFAULT];
 static emcute_sub_t subscriptions[NUMOFSUBS];
 static char topics[NUMOFSUBS][TOPIC_MAXLEN];
 
-static void *emcute_thread(void *arg)
-{
+static void *emcute_thread(void *arg) {
     (void)arg;
     emcute_run(CONFIG_EMCUTE_DEFAULT_PORT, EMCUTE_ID);
-    return NULL;    /* should never be reached */
+    return NULL; /* should never be reached */
 }
 
-static void on_pub(const emcute_topic_t *topic, void *data, size_t len)
-{
+static void on_pub(const emcute_topic_t *topic, void *data, size_t len) {
     char *in = (char *)data;
 
     printf("### got publication for topic '%s' [%i] ###\n",
@@ -93,9 +91,7 @@ static void on_pub(const emcute_topic_t *topic, void *data, size_t len)
     puts("");
 }
 
-
-static uint8_t get_prefix_len(char *addr)
-{
+static uint8_t get_prefix_len(char *addr) {
     int prefix_len = ipv6_addr_split_int(addr, '/', _IPV6_DEFAULT_PREFIX_LEN);
 
     if (prefix_len < 1) {
@@ -105,23 +101,20 @@ static uint8_t get_prefix_len(char *addr)
     return prefix_len;
 }
 
-static int netif_add(char *iface_name,char *addr_str)
-{
-
+static int netif_add(char *iface_name, char *addr_str) {
     netif_t *iface = netif_get_by_name(iface_name);
-        if (!iface) {
-            puts("error: invalid interface given");
-            return 1;
-        }
+    if (!iface) {
+        puts("error: invalid interface given");
+        return 1;
+    }
     enum {
         _UNICAST = 0,
         _ANYCAST
     } type = _UNICAST;
-    
+
     ipv6_addr_t addr;
     uint16_t flags = GNRC_NETIF_IPV6_ADDRS_FLAGS_STATE_VALID;
     uint8_t prefix_len;
-
 
     prefix_len = get_prefix_len(addr_str);
 
@@ -136,8 +129,7 @@ static int netif_add(char *iface_name,char *addr_str)
             printf("error: unable to join IPv6 multicast group\n");
             return 1;
         }
-    }
-    else {
+    } else {
         if (type == _ANYCAST) {
             flags |= GNRC_NETIF_IPV6_ADDRS_FLAGS_ANYCAST;
         }
@@ -153,14 +145,13 @@ static int netif_add(char *iface_name,char *addr_str)
     printf("\n");
 
     return 0;
-
 }
 
-static int pub(char* topic, const char* data, int qos){
+static int pub(char *topic, const char *data, int qos) {
     emcute_topic_t t;
     unsigned flags = EMCUTE_QOS_0;
 
-    switch(qos){
+    switch (qos) {
         case 1:
             flags |= EMCUTE_QOS_1;
             break;
@@ -170,15 +161,14 @@ static int pub(char* topic, const char* data, int qos){
         default:
             flags |= EMCUTE_QOS_0;
             break;
-
     }
 
     t.name = MQTT_TOPIC;
-    if(emcute_reg(&t) != EMCUTE_OK){
+    if (emcute_reg(&t) != EMCUTE_OK) {
         puts("[MQTT] PUB ERROR: Unable to obtain Topic ID");
         return 1;
     }
-    if(emcute_pub(&t, data, strlen(data), flags) != EMCUTE_OK){
+    if (emcute_pub(&t, data, strlen(data), flags) != EMCUTE_OK) {
         printf("[MQTT] PUB ERROR: unable to publish data to topic '%s [%i]'\n", t.name, (int)t.id);
         return 1;
     }
@@ -187,23 +177,21 @@ static int pub(char* topic, const char* data, int qos){
     return 0;
 }
 
-int setup_mqtt(void)
-{
+int setup_mqtt(void) {
     /* initialize our subscription buffers */
     memset(subscriptions, 0, (NUMOFSUBS * sizeof(emcute_sub_t)));
 
     /* start the emcute thread */
     thread_create(stack_emcute, sizeof(stack_emcute), EMCUTE_PRIO, 0, emcute_thread, NULL, "emcute");
     //Adding address to network interface
-    netif_add("4","fec0:affe::99");
+    netif_add("4", "fec0:affe::99");
     // connect to MQTT-SN broker
     printf("Connecting to MQTT-SN broker %s port %d.\n", SERVER_ADDR, SERVER_PORT);
 
     sock_udp_ep_t gw = {
         .family = AF_INET6,
-        .port = SERVER_PORT
-    };
-    
+        .port = SERVER_PORT};
+
     char *message = "connected";
     size_t len = strlen(message);
 
@@ -221,11 +209,11 @@ int setup_mqtt(void)
     printf("Successfully connected to gateway at [%s]:%i\n", SERVER_ADDR, (int)gw.port);
 
     // setup subscription to topic
-    
+
     unsigned flags = EMCUTE_QOS_0;
     subscriptions[0].cb = on_pub;
     strcpy(topics[0], MQTT_TOPIC_IN);
-    subscriptions[0].topic.name =MQTT_TOPIC_IN;
+    subscriptions[0].topic.name = MQTT_TOPIC_IN;
 
     if (emcute_sub(&subscriptions[0], flags) != EMCUTE_OK) {
         printf("error: unable to subscribe to %s\n", MQTT_TOPIC_IN);
@@ -233,7 +221,7 @@ int setup_mqtt(void)
     }
 
     printf("Now subscribed to %s\n", MQTT_TOPIC_IN);
-    
+
     return 0;
 }
 
@@ -284,15 +272,14 @@ void *measure_light(void *arg) {
 
     avg /= iterations;
     avg = round(avg);
-    
+
     char lux_str[40];
-    sprintf(lux_str, "{\"id\":\"%s\",\"lux\":\"%d\"}}",EMCUTE_ID, avg);
+    sprintf(lux_str, "{\"id\":\"%s\",\"lux\":\"%d\"}}", EMCUTE_ID, avg);
     puts("Publishing lux avg");
-    pub(MQTT_TOPIC, lux_str, 0);    // TODO: Move to main
-    printf("Avg: %d\n", avg); 
+    pub(MQTT_TOPIC, lux_str, 0);  // TODO: Move to main
+    printf("Avg: %d\n", avg);
 
-
-    if (avg < 20)               // TODO: This should be performed by the IoT Core
+    if (avg < 20)  // TODO: This should be performed by the IoT Core
         toggle_lamp(LAMP_ON);
     else
         toggle_lamp(LAMP_OFF);
@@ -475,7 +462,7 @@ int main(void) {
 
         //TODO: collect all messages here (Lux & Temp) & publish them to MQTT-SN
 
-        //TODO: Code to trigger actuators based on IoT core replies 
+        //TODO: Code to trigger actuators based on IoT core replies
 
         xtimer_periodic_wakeup(&last, DELAY);
     }
