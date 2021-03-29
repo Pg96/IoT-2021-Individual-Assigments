@@ -23,7 +23,10 @@
 #include "shell.h"
 #include "thread.h"
 #include "xtimer.h"
+#include "net/emcute.h"
+#include "net/ipv6/addr.h"
 
+/* Sensors Section */
 #define ADC_IN_USE ADC_LINE(0)
 #define ADC_RES ADC_RES_12BIT
 
@@ -44,15 +47,199 @@
 #define LAMP_ON 0
 #define LAMP_OFF 1
 
+/* MQTT SECTION */
+#ifndef EMCUTE_ID
+#define EMCUTE_ID           ("gertrud")
+#endif
+#define EMCUTE_PRIO         (THREAD_PRIORITY_MAIN - 1)
+
+#define _IPV6_DEFAULT_PREFIX_LEN        (64U)
+
+#define NUMOFSUBS           (16U)
+#define TOPIC_MAXLEN        (64U)
+
+/* [Sensors] Stacks for multi-threading & tids placeholders*/
 char stack_lux[THREAD_STACKSIZE_MAIN];
 char stack_temp[THREAD_STACKSIZE_MAIN];
 
 kernel_pid_t tmain, t1, t2;
 
+/* DHT11 device */
 dht_t dev;
+
+/* [Emcute - MQTT] Stack and  vars */
+static char stack_emcute[THREAD_STACKSIZE_DEFAULT];
+//static msg_t queue[8];
+
+static emcute_sub_t subscriptions[NUMOFSUBS];
+static char topics[NUMOFSUBS][TOPIC_MAXLEN];
+
+static void *emcute_thread(void *arg)
+{
+    (void)arg;
+    emcute_run(CONFIG_EMCUTE_DEFAULT_PORT, EMCUTE_ID);
+    return NULL;    /* should never be reached */
+}
+
+static void on_pub(const emcute_topic_t *topic, void *data, size_t len)
+{
+    char *in = (char *)data;
+
+    printf("### got publication for topic '%s' [%i] ###\n",
+           topic->name, (int)topic->id);
+    for (size_t i = 0; i < len; i++) {
+        printf("%c", in[i]);
+    }
+    puts("");
+}
+
+
+static uint8_t get_prefix_len(char *addr)
+{
+    int prefix_len = ipv6_addr_split_int(addr, '/', _IPV6_DEFAULT_PREFIX_LEN);
+
+    if (prefix_len < 1) {
+        prefix_len = _IPV6_DEFAULT_PREFIX_LEN;
+    }
+
+    return prefix_len;
+}
+
+static int netif_add(char *iface_name,char *addr_str)
+{
+
+    netif_t *iface = netif_get_by_name(iface_name);
+        if (!iface) {
+            puts("error: invalid interface given");
+            return 1;
+        }
+    enum {
+        _UNICAST = 0,
+        _ANYCAST
+    } type = _UNICAST;
+    
+    ipv6_addr_t addr;
+    uint16_t flags = GNRC_NETIF_IPV6_ADDRS_FLAGS_STATE_VALID;
+    uint8_t prefix_len;
+
+
+    prefix_len = get_prefix_len(addr_str);
+
+    if (ipv6_addr_from_str(&addr, addr_str) == NULL) {
+        puts("error: unable to parse IPv6 address.");
+        return 1;
+    }
+
+    if (ipv6_addr_is_multicast(&addr)) {
+        if (netif_set_opt(iface, NETOPT_IPV6_GROUP, 0, &addr,
+                          sizeof(addr)) < 0) {
+            printf("error: unable to join IPv6 multicast group\n");
+            return 1;
+        }
+    }
+    else {
+        if (type == _ANYCAST) {
+            flags |= GNRC_NETIF_IPV6_ADDRS_FLAGS_ANYCAST;
+        }
+        flags |= (prefix_len << 8U);
+        if (netif_set_opt(iface, NETOPT_IPV6_ADDR, flags, &addr,
+                          sizeof(addr)) < 0) {
+            printf("error: unable to add IPv6 address\n");
+            return 1;
+        }
+    }
+
+    printf("success: added %s/%d to interface ", addr_str, prefix_len);
+    printf("\n");
+
+    return 0;
+
+}
+
+static int pub(char* topic, const char* data, int qos){
+    emcute_topic_t t;
+    unsigned flags = EMCUTE_QOS_0;
+
+    switch(qos){
+        case 1:
+            flags |= EMCUTE_QOS_1;
+            break;
+        case 2:
+            flags |= EMCUTE_QOS_2;
+            break;
+        default:
+            flags |= EMCUTE_QOS_0;
+            break;
+
+    }
+
+    t.name = MQTT_TOPIC;
+    if(emcute_reg(&t) != EMCUTE_OK){
+        puts("[MQTT] PUB ERROR: Unable to obtain Topic ID");
+        return 1;
+    }
+    if(emcute_pub(&t, data, strlen(data), flags) != EMCUTE_OK){
+        printf("[MQTT] PUB ERROR: unable to publish data to topic '%s [%i]'\n", t.name, (int)t.id);
+        return 1;
+    }
+
+    printf("[MQTT] PUB SUCCESS: Published %s on topic %s\n", data, topic);
+    return 0;
+}
+
+int setup_mqtt(void)
+{
+    /* initialize our subscription buffers */
+    memset(subscriptions, 0, (NUMOFSUBS * sizeof(emcute_sub_t)));
+
+    /* start the emcute thread */
+    thread_create(stack_emcute, sizeof(stack_emcute), EMCUTE_PRIO, 0, emcute_thread, NULL, "emcute");
+    //Adding address to network interface
+    netif_add("4","fec0:affe::99");
+    // connect to MQTT-SN broker
+    printf("Connecting to MQTT-SN broker %s port %d.\n", SERVER_ADDR, SERVER_PORT);
+
+    sock_udp_ep_t gw = {
+        .family = AF_INET6,
+        .port = SERVER_PORT
+    };
+    
+    char *message = "connected";
+    size_t len = strlen(message);
+
+    /* parse address */
+    if (ipv6_addr_from_str((ipv6_addr_t *)&gw.addr.ipv6, SERVER_ADDR) == NULL) {
+        printf("error parsing IPv6 address\n");
+        return 1;
+    }
+
+    if (emcute_con(&gw, true, MQTT_TOPIC, message, len, 0) != EMCUTE_OK) {
+        printf("error: unable to connect to [%s]:%i\n", SERVER_ADDR, (int)gw.port);
+        return 1;
+    }
+
+    printf("Successfully connected to gateway at [%s]:%i\n", SERVER_ADDR, (int)gw.port);
+
+    // setup subscription to topic
+    
+    unsigned flags = EMCUTE_QOS_0;
+    subscriptions[0].cb = on_pub;
+    strcpy(topics[0], MQTT_TOPIC_IN);
+    subscriptions[0].topic.name =MQTT_TOPIC_IN;
+
+    if (emcute_sub(&subscriptions[0], flags) != EMCUTE_OK) {
+        printf("error: unable to subscribe to %s\n", MQTT_TOPIC_IN);
+        return 1;
+    }
+
+    printf("Now subscribed to %s\n", MQTT_TOPIC_IN);
+    
+    return 0;
+}
 
 //static void callback_rtc(void *arg) { puts(arg); }
 
+/* Sensors & Actuators */
 int toggle_lamp(int code) {
     gpio_t pin_out = GPIO_PIN(PORT_A, 8);
     if (gpio_init(pin_out, GPIO_OUT)) {
@@ -97,7 +284,13 @@ void *measure_light(void *arg) {
 
     avg /= iterations;
     avg = round(avg);
+    
+    char lux_str[40];
+    sprintf(lux_str, "{\"id\":\"%s\",\"lux\":\"%d\"}}",EMCUTE_ID, avg);
+    puts("Publishing lux avg");
+    pub(MQTT_TOPIC, lux_str, 0);
     printf("Avg: %d\n", avg);  // TODO: Send this to the IoT core
+
 
     if (avg < 20)               // TODO: This should be performed by the IoT Core
         toggle_lamp(LAMP_ON);
@@ -240,6 +433,9 @@ int main(void) {
      *  Measures the intensity of ambient light using a photocell
      *  and the ambient temperature using a DHT11 sensor.
      */
+
+    puts("Setting up ethos and emcute");
+    setup_mqtt();
 
     printf("Initializing sensors\n");
     int sensors_status = init_sensors();

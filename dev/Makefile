@@ -17,11 +17,15 @@ QUIET ?= 1
 
 # Modules to include:
 USEMODULE += xtimer
+# For the light sensor
 USEMODULE += analog_util
+# Temp & Humidity 
 USEMODULE += dht
 USEMODULE += fmt
+# To enable-disable pins
 USEMODULE += periph_gpio
 # USEMODULE += pm
+
 
 FEATURES_OPTIONAL += periph_rtc
 FEATURES_REQUIRED += periph_adc
