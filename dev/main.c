@@ -12,7 +12,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "shell.h"
 #include "analog_util.h"
 #include "dht.h"
 #include "dht_params.h"
@@ -63,13 +62,12 @@
 #define NUMOFSUBS (16U)
 #define TOPIC_MAXLEN (64U)
 
-#define MQTT_TOKENS 4 /* The number of tokens (key-value) that will be received by the IoT Core */
+#define MQTT_TOKENS 6 /* The number of tokens (key-value) that will be received by the IoT Core */
 
 /* [Sensors] Stacks for multi-threading & tids placeholders*/
 char stack_lux[THREAD_STACKSIZE_MAIN];
 char stack_temp[THREAD_STACKSIZE_MAIN];
 char stack_loop[THREAD_STACKSIZE_MAIN];
-
 
 /* Actuators' pins */
 const gpio_t pin_org = GPIO_PIN(PORT_B, 6);  // R
@@ -117,7 +115,7 @@ int parse_val(jsmntok_t key, char *command) {
 /* Parse the reply from the IoT Core*/
 int parse_command(char *command) {
     jsmn_parser parser;
-    jsmntok_t tokens[4];
+    jsmntok_t tokens[MQTT_TOKENS];
 
     jsmn_init(&parser);
 
@@ -132,16 +130,29 @@ int parse_command(char *command) {
         return 2;
     }
 
-    // JSON STRUCT: {"lux":"0|1", "led":"0|1|2"}
+    int activations = 0;
+    int acts = 0;
+
+    // JSON STRUCT: {"acts":"1|2"", lux":"0|1", "led":"0|1|2"}
     for (int i = 1; i < MQTT_TOKENS; i += 2) {
         jsmntok_t key = tokens[i];
         unsigned int length = key.end - key.start;
         char keyString[length + 1];
         memcpy(keyString, &command[key.start], length);
         keyString[length] = '\0';
-        //printf("Key: %s\n", keyString);
+        printf("Key: %s\n", keyString);
 
-        if (strcmp(keyString, "lux") == 0) {
+        if (strcmp(keyString, "acts") == 0) {
+            int val = parse_val(tokens[i + 1], command);
+
+            if (val < 1 || val > 2) {
+                printf("An invalid number of actuator commands was passed: %d", val);
+                return 7;
+            }
+
+            activations = val;
+        }
+        else if (strcmp(keyString, "lux") == 0) {
             //puts("LUX");
             // jsmntok_t key = tokens[i + 1];
             // unsigned int length = key.end - key.start;
@@ -160,6 +171,12 @@ int parse_command(char *command) {
             }
 
             toggle_lamp(val);
+
+            acts++;
+            if (acts == activations) {
+                puts("LuBreak");
+                break;
+            }
         } else if (strcmp(keyString, "led") == 0) {
             // puts("LED");
             // jsmntok_t key = tokens[i + 1];
@@ -179,6 +196,12 @@ int parse_command(char *command) {
             }
 
             toggle_rgbled(val);
+
+            acts++;
+            if (acts == activations) {
+                puts("LeBreak");
+                break;
+            }
         } else {
             printf("Key not recognized: %s\n", keyString);
         }
@@ -299,8 +322,8 @@ int setup_mqtt(void) {
     /* start the emcute thread */
     thread_create(stack_emcute, sizeof(stack_emcute), EMCUTE_PRIO, 0, emcute_thread, NULL, "emcute");
     //Adding address to network interface
-    //netif_add("4", "2001:0db8:0:f101::2"); 
-    netif_add("4", NUCLEO_ADDR); 
+    //netif_add("4", "2001:0db8:0:f101::2");
+    netif_add("4", NUCLEO_ADDR);
     // connect to MQTT-SN broker
     printf("Connecting to MQTT-SN broker %s port %d.\n", SERVER_ADDR, SERVER_PORT);
 
@@ -481,7 +504,7 @@ int toggle_rgbled(int code) {
             gpio_set(pin_blu);
             toggle_buzzer();
             break;
-        case TEMP_OK:  // Green
+        case TEMP_OK:  // Green         /* TODO: might use Yellow for major inconsistencies */
             gpio_set(pin_yel);
             break;
     }
@@ -555,7 +578,7 @@ int init_sensors(void) {
 }
 
 void *main_loop(void *arg) {
-    (void) arg;
+    (void)arg;
     tmain = thread_getpid();
 
     xtimer_ticks32_t last = xtimer_now();
@@ -625,9 +648,8 @@ void *main_loop(void *arg) {
 }
 
 static const shell_command_t shell_commands[] = {
-//    { "will", "register a last will", cmd_will },
-    { NULL, NULL, NULL }
-};
+    //    { "will", "register a last will", cmd_will },
+    {NULL, NULL, NULL}};
 
 int main(void) {
     /** IoT 2021 -- Individual assigment
@@ -659,9 +681,8 @@ int main(void) {
     }
 
     puts("Starting main_loop thread...");
-        thread_create(stack_loop, sizeof(stack_loop), EMCUTE_PRIO, 0, main_loop, NULL, "main_loop");
+    thread_create(stack_loop, sizeof(stack_loop), EMCUTE_PRIO, 0, main_loop, NULL, "main_loop");
     puts("Thread started successfully!");
-
 
     /* start shell */
     char line_buf[SHELL_DEFAULT_BUFSIZE];
