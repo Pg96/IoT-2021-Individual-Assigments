@@ -567,7 +567,7 @@ int main(void) {
         //puts("msg2 received\n");
 
         char core_str[40];
-        sprintf(core_str, "{\"id\":\"%s\",\"lux\":\"%lu\",\"temp\":\"%lu\"}}", EMCUTE_ID, lux, temp);
+        sprintf(core_str, "{\"id\":\"%s\",\"lux\":\"%lu\",\"temp\":\"%lu\"}", EMCUTE_ID, lux, temp);
         pub(MQTT_TOPIC, core_str, 0);
 
         xtimer_periodic_wakeup(&last, DELAY);
