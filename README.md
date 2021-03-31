@@ -12,5 +12,5 @@ Yellow -> D9
 Orange -> D10
 
 ## TODO
-[ ] Cloud IoT Backend  
+[ ] [IotCore] Refine lambda
 [ ] Web dashboard  
