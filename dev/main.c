@@ -71,7 +71,7 @@ char stack_temp[THREAD_STACKSIZE_MAIN];
 char stack_loop[THREAD_STACKSIZE_MAIN];
 
 
-/* Sensors' and actuators' pins */
+/* Actuators' pins */
 const gpio_t pin_org = GPIO_PIN(PORT_B, 6);  // R
 const gpio_t pin_yel = GPIO_PIN(PORT_C, 7);  // G
 const gpio_t pin_blu = GPIO_PIN(PORT_A, 9);  // B
@@ -80,11 +80,11 @@ const gpio_t lamp_pin = GPIO_PIN(PORT_A, 8);
 
 const gpio_t buzz_pin = GPIO_PIN(PORT_B, 5);
 
-/* Thread IDs */
-kernel_pid_t tmain, t1, t2;
-
 /* DHT11 device */
 dht_t dev;
+
+/* Threads' IDs */
+kernel_pid_t tmain, t1, t2;
 
 /* [Emcute - MQTT] Stack and  vars */
 static char stack_emcute[THREAD_STACKSIZE_DEFAULT];
@@ -389,7 +389,7 @@ int toggle_lamp(int code) {
     else
         gpio_clear(lamp_pin);
 
-    return 1;
+    return 0;
 }
 
 void *measure_light(void *arg) {
