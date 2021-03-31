@@ -62,9 +62,20 @@
 #define NUMOFSUBS (16U)
 #define TOPIC_MAXLEN (64U)
 
+#define MQTT_TOKENS 4 /* The number of tokens (key-value) that will be received by the IoT Core */
+
 /* [Sensors] Stacks for multi-threading & tids placeholders*/
 char stack_lux[THREAD_STACKSIZE_MAIN];
 char stack_temp[THREAD_STACKSIZE_MAIN];
+
+/* Sensors' and actuators' pins */
+const gpio_t pin_org = GPIO_PIN(PORT_B, 6);  // R
+const gpio_t pin_yel = GPIO_PIN(PORT_C, 7);  // G
+const gpio_t pin_blu = GPIO_PIN(PORT_A, 9);  // B
+
+const gpio_t lamp_pin = GPIO_PIN(PORT_A, 8);
+
+const gpio_t buzz_pin = GPIO_PIN(PORT_B, 5);
 
 kernel_pid_t tmain, t1, t2;
 
@@ -88,15 +99,15 @@ int toggle_lamp(int code);
 int toggle_rgbled(int code);
 
 int parse_val(jsmntok_t key, char *command) {
-                unsigned int length = key.end - key.start;
-            char keyString[length + 1];
-            memcpy(keyString, &command[key.start], length);
-            keyString[length] = '\0';
-            printf("Val: %s\n", keyString);
+    unsigned int length = key.end - key.start;
+    char keyString[length + 1];
+    memcpy(keyString, &command[key.start], length);
+    keyString[length] = '\0';
+    printf("Val: %s\n", keyString);
 
-            int val = atoi(keyString);
+    int val = atoi(keyString);
 
-            return val;
+    return val;
 }
 
 /* Parse the reply from the IoT Core*/
@@ -118,7 +129,7 @@ int parse_command(char *command) {
     }
 
     // JSON STRUCT: {"lux":"0|1", "led":"0|1|2"}
-    for (int i = 1; i < 4; i += 2) {
+    for (int i = 1; i < MQTT_TOKENS; i += 2) {
         jsmntok_t key = tokens[i];
         unsigned int length = key.end - key.start;
         char keyString[length + 1];
@@ -137,7 +148,7 @@ int parse_command(char *command) {
 
             // int val = atoi(keyString);
 
-            int val = parse_val(tokens[i+1], command);
+            int val = parse_val(tokens[i + 1], command);
 
             if (val < 0 || val > 1) {
                 printf("An invalid value was supplied for lux: %d", val);
@@ -156,7 +167,7 @@ int parse_command(char *command) {
 
             // int val = atoi(keyString);
 
-            int val = parse_val(tokens[i+1], command);
+            int val = parse_val(tokens[i + 1], command);
 
             if (val < 0 || val > 2) {
                 printf("An invalid value was supplied for temp: %d", val);
@@ -164,6 +175,8 @@ int parse_command(char *command) {
             }
 
             toggle_rgbled(val);
+        } else {
+            printf("Key not recognized: %s\n", keyString);
         }
     }
     return 0;
@@ -325,18 +338,51 @@ int setup_mqtt(void) {
 
 //static void callback_rtc(void *arg) { puts(arg); }
 
-/* Sensors & Actuators */
-int toggle_lamp(int code) {
-    gpio_t pin_out = GPIO_PIN(PORT_A, 8);
-    if (gpio_init(pin_out, GPIO_OUT)) {
+int init_actuators(void) {
+    /* Initialize lamp pin */
+    if (gpio_init(lamp_pin, GPIO_OUT)) {
         printf("An error occurred while trying to initialize GPIO_PIN(%d %d)\n", PORT_B, 5);
-        return -1;
+        return 1;
     }
 
+    /* Initialize buzzer pin */
+    if (gpio_init(buzz_pin, GPIO_OUT)) {
+        printf("An error occurred while trying to initialize GPIO_PIN(%d %d)\n", PORT_B, 5);
+        return 2;
+    }
+
+    /* Initialize RGB led pins */
+
+    printf("Trying to initialize leds\n");  // With the current conf (while on main), might even move this away
+
+    if (gpio_init(pin_org, GPIO_OUT)) {
+        printf("An error occurred while trying to initialize GPIO_PIN(%d %d)\n", PORT_B, 6);
+        return 3;
+    }
+    if (gpio_init(pin_yel, GPIO_OUT)) {
+        printf("An error occurred while trying to initialize GPIO_PIN(%d %d)\n", PORT_C, 7);
+        return 3;
+    }
+    if (gpio_init(pin_blu, GPIO_OUT)) {
+        printf("An error occurred while trying to initialize GPIO_PIN(%d %d)\n", PORT_A, 9);
+        return 3;
+    }
+
+    return 0;
+}
+
+/* Sensors & Actuators */
+int toggle_lamp(int code) {
+    // gpio_t pin_out = GPIO_PIN(PORT_A, 8);
+    // if (gpio_init(pin_out, GPIO_OUT)) {
+    //     printf("An error occurred while trying to initialize GPIO_PIN(%d %d)\n", PORT_B, 5);
+    //     return -1;
+    // }
+
     if (code == LAMP_ON)
-        gpio_set(pin_out);
+        gpio_set(lamp_pin);
     else
-        gpio_clear(pin_out);
+        gpio_clear(lamp_pin);
 
     return 1;
 }
@@ -379,47 +425,47 @@ void *measure_light(void *arg) {
 }
 
 int toggle_buzzer(void) {
-    gpio_t pin_out = GPIO_PIN(PORT_B, 5);
-    if (gpio_init(pin_out, GPIO_OUT)) {
-        printf("An error occurred while trying to initialize GPIO_PIN(%d %d)\n", PORT_B, 5);
-        return -1;
-    }
+    // gpio_t pin_out = GPIO_PIN(PORT_B, 5);
+    // if (gpio_init(pin_out, GPIO_OUT)) {
+    //     printf("An error occurred while trying to initialize GPIO_PIN(%d %d)\n", PORT_B, 5);
+    //     return -1;
+    // }
 
     // Turn on the buzzer
-    gpio_set(pin_out);
+    gpio_set(buzz_pin);
 
     xtimer_sleep(TEMP_SLEEP_TIME);
 
     // Turn off the buzzer
-    gpio_clear(pin_out);
+    gpio_clear(buzz_pin);
 
     return 0;
 }
 
 int toggle_rgbled(int code) {
-    gpio_t pin_org = GPIO_PIN(PORT_B, 6);  // R
-    gpio_t pin_yel = GPIO_PIN(PORT_C, 7);  // G
-    gpio_t pin_blu = GPIO_PIN(PORT_A, 9);  // B
+    // gpio_t pin_org = GPIO_PIN(PORT_B, 6);  // R
+    // gpio_t pin_yel = GPIO_PIN(PORT_C, 7);  // G
+    // gpio_t pin_blu = GPIO_PIN(PORT_A, 9);  // B
 
-    printf("Trying to initialize leds\n");  // With the current conf (while on main), might even move this away
+    // printf("Trying to initialize leds\n");  // With the current conf (while on main), might even move this away
 
-    if (gpio_init(pin_org, GPIO_OUT)) {
-        printf("An error occurred while trying to initialize GPIO_PIN(%d %d)\n", PORT_B, 6);
-        return -1;
-    }
-    if (gpio_init(pin_yel, GPIO_OUT)) {
-        printf("An error occurred while trying to initialize GPIO_PIN(%d %d)\n", PORT_C, 7);
-        return -1;
-    }
-    if (gpio_init(pin_blu, GPIO_OUT)) {
-        printf("An error occurred while trying to initialize GPIO_PIN(%d %d)\n", PORT_A, 9);
-        return -1;
-    }
+    // if (gpio_init(pin_org, GPIO_OUT)) {
+    //     printf("An error occurred while trying to initialize GPIO_PIN(%d %d)\n", PORT_B, 6);
+    //     return -1;
+    // }
+    // if (gpio_init(pin_yel, GPIO_OUT)) {
+    //     printf("An error occurred while trying to initialize GPIO_PIN(%d %d)\n", PORT_C, 7);
+    //     return -1;
+    // }
+    // if (gpio_init(pin_blu, GPIO_OUT)) {
+    //     printf("An error occurred while trying to initialize GPIO_PIN(%d %d)\n", PORT_A, 9);
+    //     return -1;
+    // }
 
     /* Clear the colors before setting them again */
     gpio_clear(pin_org);
     gpio_clear(pin_yel);
-    gpio_clear(pin_yel);
+    gpio_clear(pin_blu);
 
     switch (code) {
         case TEMP_TOO_HIGH:  // Red
@@ -455,7 +501,7 @@ void *measure_temp(void *arg) {
 
     int dtemp = atoi(temp_s);
     uint32_t utemp;
-    if (dtemp <= 0) {  /*treat negative temperatures as inadmissible (room temperature <= 0 is LOW) */
+    if (dtemp <= 0) { /*treat negative temperatures as inadmissible (room temperature <= 0 is LOW) */
         utemp = 0;
     } else {
         utemp = dtemp;
@@ -520,6 +566,16 @@ int main(void) {
     else {
         printf("An error occurred while initializing some sensors, error code: %d\n", sensors_status);
         return 1;
+    }
+
+    printf("Initializing actuators\n");
+    int actuators_status = init_actuators();
+
+    if (actuators_status == 0)
+        puts("All actuators initialized successfully!");
+    else {
+        printf("An error occurred while initializing some actuators, error code: %d\n", actuators_status);
+        return 2;
     }
 
     tmain = thread_getpid();
