@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "shell.h"
 #include "analog_util.h"
 #include "dht.h"
 #include "dht_params.h"
@@ -67,6 +68,8 @@
 /* [Sensors] Stacks for multi-threading & tids placeholders*/
 char stack_lux[THREAD_STACKSIZE_MAIN];
 char stack_temp[THREAD_STACKSIZE_MAIN];
+char stack_loop[THREAD_STACKSIZE_MAIN];
+
 
 /* Sensors' and actuators' pins */
 const gpio_t pin_org = GPIO_PIN(PORT_B, 6);  // R
@@ -77,6 +80,7 @@ const gpio_t lamp_pin = GPIO_PIN(PORT_A, 8);
 
 const gpio_t buzz_pin = GPIO_PIN(PORT_B, 5);
 
+/* Thread IDs */
 kernel_pid_t tmain, t1, t2;
 
 /* DHT11 device */
@@ -295,7 +299,7 @@ int setup_mqtt(void) {
     /* start the emcute thread */
     thread_create(stack_emcute, sizeof(stack_emcute), EMCUTE_PRIO, 0, emcute_thread, NULL, "emcute");
     //Adding address to network interface
-    netif_add("4", "2001:0db8:0:f101::2");
+    netif_add("4", "2001:0db8:0:f101::2"); // TODO: move this to Makefile.ethos.con
     // connect to MQTT-SN broker
     printf("Connecting to MQTT-SN broker %s port %d.\n", SERVER_ADDR, SERVER_PORT);
 
@@ -549,35 +553,8 @@ int init_sensors(void) {
     return res;
 }
 
-int main(void) {
-    /** IoT 2021 -- Individual assigment
-     *  Measures the intensity of ambient light using a photocell
-     *  and the ambient temperature using a DHT11 sensor.
-     */
-
-    puts("Setting up ethos and emcute");
-    setup_mqtt();
-
-    printf("Initializing sensors\n");
-    int sensors_status = init_sensors();
-
-    if (sensors_status == 0)
-        printf("All sensors initialized successfully!\n");
-    else {
-        printf("An error occurred while initializing some sensors, error code: %d\n", sensors_status);
-        return 1;
-    }
-
-    printf("Initializing actuators\n");
-    int actuators_status = init_actuators();
-
-    if (actuators_status == 0)
-        puts("All actuators initialized successfully!");
-    else {
-        printf("An error occurred while initializing some actuators, error code: %d\n", actuators_status);
-        return 2;
-    }
-
+void *main_loop(void *arg) {
+    (void) arg;
     tmain = thread_getpid();
 
     xtimer_ticks32_t last = xtimer_now();
@@ -644,6 +621,52 @@ int main(void) {
 
     // /* Enter deep sleep mode */
     // pm_set(mode);
+
+    //return 0;
+}
+
+static const shell_command_t shell_commands[] = {
+//    { "will", "register a last will", cmd_will },
+    { NULL, NULL, NULL }
+};
+
+int main(void) {
+    /** IoT 2021 -- Individual assigment
+     *  Measures the intensity of ambient light using a photocell
+     *  and the ambient temperature using a DHT11 sensor.
+     */
+
+    puts("Setting up ethos and emcute");
+    setup_mqtt();
+
+    printf("Initializing sensors\n");
+    int sensors_status = init_sensors();
+
+    if (sensors_status == 0)
+        printf("All sensors initialized successfully!\n");
+    else {
+        printf("An error occurred while initializing some sensors, error code: %d\n", sensors_status);
+        return 1;
+    }
+
+    printf("Initializing actuators\n");
+    int actuators_status = init_actuators();
+
+    if (actuators_status == 0)
+        puts("All actuators initialized successfully!");
+    else {
+        printf("An error occurred while initializing some actuators, error code: %d\n", actuators_status);
+        return 2;
+    }
+
+    puts("Starting main_loop thread...");
+        thread_create(stack_loop, sizeof(stack_loop), EMCUTE_PRIO, 0, main_loop, NULL, "main_loop");
+    puts("Thread started successfully!");
+
+
+    /* start shell */
+    char line_buf[SHELL_DEFAULT_BUFSIZE];
+    shell_run(shell_commands, line_buf, SHELL_DEFAULT_BUFSIZE);
 
     return 0;
 }

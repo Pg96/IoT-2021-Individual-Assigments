@@ -26,6 +26,11 @@ USEMODULE += fmt
 USEMODULE += periph_gpio
 # USEMODULE += pm
 
+# Shell support
+USEMODULE += shell
+USEMODULE += shell_commands
+USEMODULE += ps
+
 
 FEATURES_OPTIONAL += periph_rtc
 FEATURES_REQUIRED += periph_adc
