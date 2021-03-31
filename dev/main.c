@@ -299,7 +299,8 @@ int setup_mqtt(void) {
     /* start the emcute thread */
     thread_create(stack_emcute, sizeof(stack_emcute), EMCUTE_PRIO, 0, emcute_thread, NULL, "emcute");
     //Adding address to network interface
-    netif_add("4", "2001:0db8:0:f101::2"); // TODO: move this to Makefile.ethos.con
+    //netif_add("4", "2001:0db8:0:f101::2"); // TODO: move this to Makefile.ethos.con
+    netif_add("4", NUCLEO_ADDR); // TODO: move this to Makefile.ethos.con
     // connect to MQTT-SN broker
     printf("Connecting to MQTT-SN broker %s port %d.\n", SERVER_ADDR, SERVER_PORT);
 
@@ -558,8 +559,6 @@ void *main_loop(void *arg) {
     tmain = thread_getpid();
 
     xtimer_ticks32_t last = xtimer_now();
-
-    //TODO: IDEA: promote what is below to new thread & add command line(?)
 
     while (1) {
         /* Measure the ambient light on a different thead in order to concurrently
