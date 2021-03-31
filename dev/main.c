@@ -107,7 +107,7 @@ int parse_val(jsmntok_t key, char *command) {
     char keyString[length + 1];
     memcpy(keyString, &command[key.start], length);
     keyString[length] = '\0';
-    printf("Val: %s\n", keyString);
+    //printf("Val: %s\n", keyString);
 
     int val = atoi(keyString);
 
@@ -571,7 +571,7 @@ void *main_loop(void *arg) {
         t2 = thread_create(stack_temp, sizeof(stack_temp), THREAD_PRIORITY_MAIN - 3,
                            THREAD_CREATE_STACKTEST, measure_temp, NULL, "temp_check");
 
-        puts("THREADS CREATED");
+        //puts("THREADS CREATED");
         //printf("%hd\t%hd\t%hd\n", tmain, t1, t2);
 
         msg_t msg1, msg2;
@@ -594,8 +594,8 @@ void *main_loop(void *arg) {
             lux = msg2.content.value;
         }
 
-        printf("LUX: %lu\n", lux);
-        printf("TEMP: %lu\n", temp);
+        //printf("LUX: %lu\n", lux);
+        //printf("TEMP: %lu\n", temp);
         //puts("msg2 received\n");
 
         char core_str[40];
