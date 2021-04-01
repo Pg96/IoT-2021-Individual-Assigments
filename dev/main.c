@@ -1,7 +1,8 @@
 /**
  * @{
  *
- * @brief       Light & Temperature measurer
+ * @brief       Light & Temperature measurer. Sensor readings are sent to the cloud (aws IoT Core)
+ *              which will command the activation of the actuators (lamp and rgb led+buzzer)
  *
  * @author      Giacomo Priamo <priamo.1701568@studenti.uniroma1.it>
  *
@@ -36,10 +37,10 @@
 
 #define LIGHT_ITER 5 /* Light measurement - number of iterations */
 
-#define PM_MODE 0  /* Power  Management mode */
-#define PM_DELAY 5 /* Power Management Wake-up delay */
+// #define PM_MODE 0  /* Power  Management mode */
+// #define PM_DELAY 5 /* Power Management Wake-up delay */
 
-#define DELAY (20000LU * US_PER_MS) /* 10 s - Delay between main iterations */
+#define DELAY (60000LU * US_PER_MS) /* 1 minute - Delay between main_loop() iterations */
 
 #define TEMP_SLEEP_TIME 2  /* Determines the duration of the LED & buzzer actuators actions */
 #define LIGHT_SLEEP_TIME 1 /* Determines the sleep time among the iterations in the measure_light() loop */
