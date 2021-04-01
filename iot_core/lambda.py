@@ -3,6 +3,7 @@ import json
 from datetime import datetime, timezone
 
 def lambda_handler(event, context):
+        ''' Handles the sensors' readings and triggers the actuators '''
         client = boto3.client('iot-data', region_name='us-east-1')
         
         UTC_SKEW = 2
