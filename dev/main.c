@@ -54,7 +54,7 @@
 
 /* MQTT SECTION */
 #ifndef EMCUTE_ID
-#define EMCUTE_ID ("power_saver")
+#define EMCUTE_ID ("power_saver_0")
 #endif
 #define EMCUTE_PRIO (THREAD_PRIORITY_MAIN - 1)
 
