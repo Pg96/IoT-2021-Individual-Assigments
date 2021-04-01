@@ -14,4 +14,5 @@ Yellow -> D9
 Orange -> D10
 
 ## TODO
-[ ] Test
+- [Web] Fix undefined when no readings are available
+- Test
