@@ -1,2 +1,5 @@
 #!/bin/bash
-/home/kaosv/mosquitto.rsmb/rsmb/src/broker_mqtts /home/kaosv/mosquitto.rsmb/rsmb/src/config.conf
+
+MOSQUITTOrsmb_DIR=/home/kaosv/mosquitto.rsmb/
+
+${MOSQUITTOrsmb_DIR}rsmb/src/broker_mqtts ${MOSQUITTOrsmb_DIR}rsmb/src/config.conf
