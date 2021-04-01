@@ -74,8 +74,55 @@
 
         	})
 
-            .catch(error => console.log('error', error));
+        	// LAMP: https://brh0jzg8hf.execute-api.us-east-1.amazonaws.com/dev
+        	// LED: https://y2ig9vbgr4.execute-api.us-east-1.amazonaws.com/dev
+
+            .catch(error => console.log('error', error));            
         }
+
+        var triggerLamp = (code)=>{
+            // instantiate a headers object
+            //alert(code);
+            var myHeaders = new Headers();
+            // add content type header to object
+            myHeaders.append("Content-Type", "application/json");
+            // using built in JSON utility package turn object to string and store in a variable
+            var raw = JSON.stringify({"lamp":code});
+            // create a JSON object with parameters for API call and store in a variable
+            var requestOptions = {
+                method: 'POST',
+                headers: myHeaders,
+                body: raw,
+                redirect: 'follow'
+            };
+            // make API call with parameters and use promises to get response
+            fetch("https://brh0jzg8hf.execute-api.us-east-1.amazonaws.com/dev", requestOptions)
+            .then(response => response.text())
+            .then(result => alert(JSON.parse(result).body))
+            .catch(error => console.log('error', error));
+        } 
+
+        var triggerLed = (code)=>{
+            // instantiate a headers object
+            //alert(code);
+            var myHeaders = new Headers();
+            // add content type header to object
+            myHeaders.append("Content-Type", "application/json");
+            // using built in JSON utility package turn object to string and store in a variable
+            var raw = JSON.stringify({"led":code});
+            // create a JSON object with parameters for API call and store in a variable
+            var requestOptions = {
+                method: 'POST',
+                headers: myHeaders,
+                body: raw,
+                redirect: 'follow'
+            };
+            // make API call with parameters and use promises to get response
+            fetch("https://y2ig9vbgr4.execute-api.us-east-1.amazonaws.com/dev", requestOptions)
+            .then(response => response.text())
+            .then(result => alert(JSON.parse(result).body))
+            .catch(error => console.log('error', error));
+        }                 
     </script>
 </head>
 <body onload="callAPI();">
@@ -101,6 +148,11 @@
     <p>Temp:<span><span id="alltemp"></span></p> 
     <hr>
 
-
+ 	<h2>Actuators' Triggers</h2>
+ 	<p>Lamp</p>
+ 	<p><button type="button" onclick="triggerLamp(1)">ON</button>  <button type="button" onclick="triggerLamp(0)">OFF</button>  </p>
+  	<p>LED</p>
+ 	<p><button type="button" onclick="triggerLed(0)">R</button>  <button type="button" onclick="triggerLed(2)">G</button> 
+ 		<button type="button" onclick="triggerLed(1)">B</button> </p>
 </body>
 </html>
