@@ -12,5 +12,4 @@ Yellow -> D9
 Orange -> D10
 
 ## TODO
-[ ] [IotCore] Refine lambda
-[ ] Web dashboard  
+[ ] [Web] Actuators control
