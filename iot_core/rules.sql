@@ -1,0 +1,1 @@
+SELECT id, lux, temp FROM 'localgateway_to_awsiot'
