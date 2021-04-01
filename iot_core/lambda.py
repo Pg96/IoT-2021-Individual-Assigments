@@ -6,8 +6,14 @@ def lambda_handler(event, context):
         client = boto3.client('iot-data', region_name='us-east-1')
         
         UTC_SKEW = 2
+        
         START_HOUR = 8
         END_HOUR = 19
+        LUX_THRESHOLD = 15
+        
+        TEMPHIGH_THRESHOLD = 30
+        TEMPLOW_THRESHOLD = 10
+        
         
         hour_now = int(datetime.now(timezone.utc).time().hour)
         hour_now += UTC_SKEW
@@ -15,20 +21,20 @@ def lambda_handler(event, context):
                 hour_now = hour_now - 24
         
         enable_lux = 0
-        if (int(event['lux']) < 15 and (hour_now >= START_HOUR and hour_now <= END_HOUR)):
+        if (int(event['lux']) < LUX_THRESHOLD and (hour_now >= START_HOUR and hour_now <= END_HOUR)):
                 enable_lux = 1
                 
         led_code = 2 # Green
-        if (int(event['temp']) < 10):
+        if (int(event['temp']) < TEMPLOW_THRESHOLD):
                 led_code = 1 # Blue
-        elif (int(event['temp']) > 30):
+        elif (int(event['temp']) > TEMPHIGH_THRESHOLD):
                 led_code = 0 # Red
 
         # Change topic, qos and payload
         response = client.publish(
                 topic='awsiot_to_localgateway',
                 qos=0,
-                payload=json.dumps({"acts":"1", "lux":str(enable_lux), "led":str(led_code)})
+                payload=json.dumps({"acts":"2", "lux":str(enable_lux), "led":str(led_code)})
             )
 
         return response
