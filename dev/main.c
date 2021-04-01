@@ -140,7 +140,7 @@ int parse_command(char *command) {
         char keyString[length + 1];
         memcpy(keyString, &command[key.start], length);
         keyString[length] = '\0';
-        printf("Key: %s\n", keyString);
+        //printf("Key: %s\n", keyString);
 
         if (strcmp(keyString, "acts") == 0) {
             int val = parse_val(tokens[i + 1], command);
@@ -174,7 +174,7 @@ int parse_command(char *command) {
 
             acts++;
             if (acts == activations) {
-                puts("LuBreak");
+                //puts("LuBreak");
                 break;
             }
         } else if (strcmp(keyString, "led") == 0) {
@@ -199,7 +199,7 @@ int parse_command(char *command) {
 
             acts++;
             if (acts == activations) {
-                puts("LeBreak");
+                //puts("LeBreak");
                 break;
             }
         } else {
@@ -399,6 +399,7 @@ int init_actuators(void) {
     return 0;
 }
 
+int curr_lux = 0;
 /* Sensors & Actuators */
 int toggle_lamp(int code) {
     // gpio_t pin_out = GPIO_PIN(PORT_A, 8);
@@ -407,10 +408,16 @@ int toggle_lamp(int code) {
     //     return -1;
     // }
 
-    if (code == LAMP_ON)
+    /* Avoid re-triggering the current action */
+    if (curr_lux == code)
+        return 0;
+
+    if (code == LAMP_ON) 
         gpio_set(lamp_pin);
     else
         gpio_clear(lamp_pin);
+    
+    curr_lux = code;
 
     return 0;
 }
@@ -425,14 +432,14 @@ void *measure_light(void *arg) {
     const int iterations = LIGHT_ITER;
     int i = 0;
 
+    printf("Sampling light...\n");
     while (i < iterations) {
         sample = adc_sample(ADC_IN_USE, ADC_RES);
         lux = adc_util_map(sample, ADC_RES, 10, 100);
-        printf("Sampling");
         if (sample < 0) {
             printf("ADC_LINE(%u): selected resolution not applicable\n", ADC_IN_USE);
         } else {
-            printf("ADC_LINE(%u): raw value: %i, lux: %i\n", ADC_IN_USE, sample, lux);
+            //printf("ADC_LINE(%u): raw value: %i, lux: %i\n", ADC_IN_USE, sample, lux);
 
             avg += lux;
         }
@@ -443,6 +450,8 @@ void *measure_light(void *arg) {
     avg /= iterations;
     avg = round(avg);
     uint32_t uavg = avg;
+
+    printf("Average lux after %d iterations at a %d-second(s) interval: %lu\n", iterations, LIGHT_SLEEP_TIME, uavg);
 
     msg_t msg;
     /* Signal to the main thread that this thread's execution has finished */
@@ -470,6 +479,7 @@ int toggle_buzzer(void) {
     return 0;
 }
 
+int curr_led = -1;
 int toggle_rgbled(int code) {
     // gpio_t pin_org = GPIO_PIN(PORT_B, 6);  // R
     // gpio_t pin_yel = GPIO_PIN(PORT_C, 7);  // G
@@ -489,6 +499,11 @@ int toggle_rgbled(int code) {
     //     printf("An error occurred while trying to initialize GPIO_PIN(%d %d)\n", PORT_A, 9);
     //     return -1;
     // }
+
+    /* Avoid re-triggering the same action */
+    if (curr_led == code)
+        return 0;
+    curr_led = code;
 
     /* Clear the colors before setting them again */
     gpio_clear(pin_org);
