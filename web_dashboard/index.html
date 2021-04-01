@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>IoT-2021 Individual Assignments</title>
+    <!-- Add some CSS to change client UI -->
+    <style>
+    body {
+        background-color: #232F3E;
+        }
+    h1 {
+  text-align: center;
+  border: 3px solid green;
+        color: #FF9900;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 40px;
+        
+        }
+    p, span {
+        color: #FF9900;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 20px;
+        margin-left: 40px;
+        }
+     input {
+        color: #232F3E;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 20px;
+        margin-left: 20px;
+        }
+    </style>
+    <script>
+        var callAPI = () =>{
+            // instantiate a headers object
+            var myHeaders = new Headers();
+            // add content type header to object
+            myHeaders.append("Content-Type", "application/json");
+            // using built in JSON utility package turn object to string and store in a variable
+            // var raw = JSON.stringify({"firstName":firstName,"lastName":lastName});
+            // create a JSON object with parameters for API call and store in a variable
+            var requestOptions = {
+                method: 'POST',
+                headers: myHeaders,
+                //body: raw,
+                redirect: 'follow'
+            };
+            // make API call with parameters and use promises to get response
+            fetch("https://itixl6i4qe.execute-api.us-east-1.amazonaws.com/dev", requestOptions)
+            .then(response => response.text())
+            //.then(result => alert(JSON.parse(result).body))
+            //{"statusCode": 200, "latest_lux": 22, "latest_temp": 24, "lux_max": 22, "lux_min": 22, "lux_avg": 22.0, "temp_max": 24, "temp_min": 24, "temp_avg": 24.0}
+            //.then(result =>  document.getElementById("llux").innerHTML = JSON.parse(result).latest_lux)
+            
+            .then(function (result) {
+            	document.getElementById("llux").innerHTML = JSON.parse(result).latest_lux;
+            	document.getElementById("ltemp").innerHTML = JSON.parse(result).latest_temp;
+
+            	document.getElementById("maxlux").innerHTML = JSON.parse(result).lux_max;
+            	document.getElementById("minlux").innerHTML = JSON.parse(result).lux_min;
+            	document.getElementById("avglux").innerHTML = JSON.parse(result).lux_avg;
+
+            	document.getElementById("maxtemp").innerHTML = JSON.parse(result).temp_max;
+            	document.getElementById("mintemp").innerHTML = JSON.parse(result).temp_min;
+            	document.getElementById("avgtemp").innerHTML = JSON.parse(result).temp_avg; 
+
+            	document.getElementById("alllux").innerHTML = JSON.parse(result).all_lux; 
+            	document.getElementById("alltemp").innerHTML = JSON.parse(result).all_temp; 
+
+
+        	})
+
+            .catch(error => console.log('error', error));
+        }
+    </script>
+</head>
+<body onload="callAPI();">
+    <!--<form>
+        <label>First Name :</label>
+        <input type="text" id="fName">
+        <label>Last Name :</label>
+        <input type="text" id="lName">
+        < !-- set button onClick method to call function we defined passing input values as parameters -- ">
+        <button type="button" onclick="callAPI(document.getElementById('fName').value,document.getElementById('lName').value)">Call API</button>
+    </form> -->
+
+ 	<h1> IoT 2021 Dashboard </h1>
+
+    <p>Latest sensor values:</p>  <p>Lux: <span></span></span><span id="llux"></span></p> <p>Temp: <span><span id="ltemp"></span></p>
+    <hr>
+    <p>Max, min, avg:</p> <p>Lux: <span><span id="maxlux"></span> <span id="minlux"></span> <span id="avglux"></span></p>
+    <p>Temp:<span> <span id="maxtemp"></span> <span id="mintemp"></span> <span id="avgtemp"></span></p>
+    <hr>
+    <p>Last hour readings (sorted from most recent to least recent):</p>
+    <p>Lux:<span><span id="alllux"></span></p> 
+    <p>Temp:<span><span id="alltemp"></span></p> 
+    <hr>
+
+</body>
+</html>
