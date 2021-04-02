@@ -15,6 +15,10 @@ def lambda_handler(event, context):
         TEMPHIGH_THRESHOLD = 30
         TEMPLOW_THRESHOLD = 10
         
+        WINTER_START_MONTH = -2 # = 2 months before the current year (November)
+        WINTER_END_MONTH = 3
+        SUMMER_START_MONTH = 5
+        SUMMER_END_MONTH = 8
         
         hour_now = int(datetime.now(timezone.utc).time().hour)
         #print(hour_now)
@@ -29,12 +33,15 @@ def lambda_handler(event, context):
         
         #print(enable_lux)
         
-        
+        currentmonth = int(datetime.now().date().month)
+        #print(currentmonth)
                 
         led_code = 2 # Green
-        if (int(event['temp']) < TEMPLOW_THRESHOLD):
+        # This check should only be performed during the summer period
+        if ((currentmonth >= SUMMER_START_MONTH and currentmonth <= SUMMER_END_MONTH) and int(event['temp']) < TEMPLOW_THRESHOLD):
                 led_code = 1 # Blue
-        elif (int(event['temp']) > TEMPHIGH_THRESHOLD):
+        # This check should only be performed during the winter period
+        elif ((currentmonth >= WINTER_START_MONTH and currentmonth <= WINTER_END_MONTH) and int(event['temp']) > TEMPHIGH_THRESHOLD):
                 led_code = 0 # Red
 
         # Change topic, qos and payload
