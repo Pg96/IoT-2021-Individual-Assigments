@@ -134,7 +134,7 @@ int parse_command(char *command) {
     int activations = 0;
     int acts = 0;
 
-    // JSON STRUCT: {"acts":"1|2"", lux":"0|1", "led":"0|1|2"}
+    // JSON STRUCT: {"acts":"1|2"", [lux":"0|1"], ["led":"0|1|2"]} ('[]' mean optional)
     for (int i = 1; i < MQTT_TOKENS; i += 2) {
         jsmntok_t key = tokens[i];
         unsigned int length = key.end - key.start;
@@ -154,16 +154,6 @@ int parse_command(char *command) {
             activations = val;
         }
         else if (strcmp(keyString, "lux") == 0) {
-            //puts("LUX");
-            // jsmntok_t key = tokens[i + 1];
-            // unsigned int length = key.end - key.start;
-            // char keyString[length + 1];
-            // memcpy(keyString, &command[key.start], length);
-            // keyString[length] = '\0';
-            // printf("Val: %s\n", keyString);
-
-            // int val = atoi(keyString);
-
             int val = parse_val(tokens[i + 1], command);
 
             if (val < 0 || val > 1) {
@@ -179,16 +169,6 @@ int parse_command(char *command) {
                 break;
             }
         } else if (strcmp(keyString, "led") == 0) {
-            // puts("LED");
-            // jsmntok_t key = tokens[i + 1];
-            // unsigned int length = key.end - key.start;
-            // char keyString[length + 1];
-            // memcpy(keyString, &command[key.start], length);
-            // keyString[length] = '\0';
-            // printf("Val: %s\n", keyString);
-
-            // int val = atoi(keyString);
-
             int val = parse_val(tokens[i + 1], command);
 
             if (val < 0 || val > 2) {
@@ -316,6 +296,7 @@ static int pub(char *topic, const char *data, int qos) {
     return 0;
 }
 
+
 int setup_mqtt(void) {
     /* initialize our subscription buffers */
     memset(subscriptions, 0, (NUMOFSUBS * sizeof(emcute_sub_t)));
@@ -403,12 +384,6 @@ int init_actuators(void) {
 int curr_lux = 0;
 /* Sensors & Actuators */
 int toggle_lamp(int code) {
-    // gpio_t pin_out = GPIO_PIN(PORT_A, 8);
-    // if (gpio_init(pin_out, GPIO_OUT)) {
-    //     printf("An error occurred while trying to initialize GPIO_PIN(%d %d)\n", PORT_B, 5);
-    //     return -1;
-    // }
-
     /* Avoid re-triggering the current action */
     if (curr_lux == code)
         return 0;
@@ -482,25 +457,6 @@ int toggle_buzzer(void) {
 
 int curr_led = -1;
 int toggle_rgbled(int code) {
-    // gpio_t pin_org = GPIO_PIN(PORT_B, 6);  // R
-    // gpio_t pin_yel = GPIO_PIN(PORT_C, 7);  // G
-    // gpio_t pin_blu = GPIO_PIN(PORT_A, 9);  // B
-
-    // printf("Trying to initialize leds\n");  // With the current conf (while on main), might even move this away
-
-    // if (gpio_init(pin_org, GPIO_OUT)) {
-    //     printf("An error occurred while trying to initialize GPIO_PIN(%d %d)\n", PORT_B, 6);
-    //     return -1;
-    // }
-    // if (gpio_init(pin_yel, GPIO_OUT)) {
-    //     printf("An error occurred while trying to initialize GPIO_PIN(%d %d)\n", PORT_C, 7);
-    //     return -1;
-    // }
-    // if (gpio_init(pin_blu, GPIO_OUT)) {
-    //     printf("An error occurred while trying to initialize GPIO_PIN(%d %d)\n", PORT_A, 9);
-    //     return -1;
-    // }
-
     /* Avoid re-triggering the same action */
     if (curr_led == code)
         return 0;
@@ -520,7 +476,7 @@ int toggle_rgbled(int code) {
             gpio_set(pin_blu);
             toggle_buzzer();
             break;
-        case TEMP_OK:  // Green         /* TODO: might use Yellow for major inconsistencies */
+        case TEMP_OK:  // Green         /* IDEA: might use Yellow for major inconsistencies */
             gpio_set(pin_yel);
             break;
     }
@@ -545,7 +501,7 @@ void *measure_temp(void *arg) {
 
     int dtemp = atoi(temp_s);
     uint32_t utemp;
-    if (dtemp <= 0) { /*treat negative temperatures as inadmissible (room temperature <= 0 is LOW) */
+    if (dtemp <= 0) { /* Treat negative temperatures as inadmissible (room temperature <= 0 is LOW) */
         utemp = 0;
     } else {
         utemp = dtemp;
@@ -697,6 +653,7 @@ int main(void) {
     }
 
     puts("Starting main_loop thread...");
+    /* Perform sensor readings on a separate thread in order to host a shell on the main thread*/
     thread_create(stack_loop, sizeof(stack_loop), EMCUTE_PRIO, 0, main_loop, NULL, "main_loop");
     puts("Thread started successfully!");
 
