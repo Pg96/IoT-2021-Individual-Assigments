@@ -69,5 +69,8 @@ def lambda_handler(event, context):
     'temp_avg': avg_temp,
     
     'all_lux': all_lux,
-    'all_temp': all_temp
+    'all_temp': all_temp,
+    
+    'lamp': int(latest['device_data']['lamp']),
+    'led': int(latest['device_data']['led'])
     }
