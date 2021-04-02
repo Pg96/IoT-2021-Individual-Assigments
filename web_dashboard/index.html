@@ -71,6 +71,23 @@
             	document.getElementById("alllux").innerHTML = JSON.parse(result).all_lux; 
             	document.getElementById("alltemp").innerHTML = JSON.parse(result).all_temp; 
 
+            	var lamp = JSON.parse(result).lamp;
+            	if (lamp === 0)
+            		lamp = "OFF";
+            	else
+            		lamp = "ON";
+				document.getElementById("curr_lamp").innerHTML = lamp;
+
+				var led = JSON.parse(result).led;
+				if (led == 0)
+					led = "RED";
+				else if (led == 1)
+					led = "BLUE";
+				else 
+					led = "GREEN";
+            	document.getElementById("curr_led").innerHTML = led; 
+
+
 
         	})
 
@@ -100,6 +117,14 @@
             .then(response => response.text())
             .then(result => alert(JSON.parse(result).body))
             .catch(error => console.log('error', error));
+
+            var lamp = "";
+            if (code === 0)
+            	lamp = "OFF";
+            else 
+            	lamp = "ON"
+			document.getElementById("curr_lamp").innerHTML = lamp;
+
         } 
 
         var triggerLed = (code)=>{
@@ -122,6 +147,16 @@
             .then(response => response.text())
             .then(result => alert(JSON.parse(result).body))
             .catch(error => console.log('error', error));
+
+            var led = "";
+			if (code == 0)
+				led = "RED";
+			else if (code == 1)
+				led = "BLUE";
+			else 
+				led = "GREEN";    
+            document.getElementById("curr_led").innerHTML = led; 
+        
         }                 
     </script>
 </head>
@@ -149,9 +184,9 @@
     <hr>
 
  	<h2>Actuators' Triggers</h2>
- 	<p>Lamp</p>
+ 	<p>Lamp (status: <span id="curr_lamp"></span>)</p>
  	<p><button type="button" onclick="triggerLamp(1)">ON</button>  <button type="button" onclick="triggerLamp(0)">OFF</button>  </p>
-  	<p>LED</p>
+  	<p>LED (status: <span id="curr_led"></span>)</p>
  	<p><button type="button" onclick="triggerLed(0)">R</button>  <button type="button" onclick="triggerLed(2)">G</button> 
  		<button type="button" onclick="triggerLed(1)">B</button> </p>
 </body>
