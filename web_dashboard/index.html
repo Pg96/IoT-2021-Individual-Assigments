@@ -71,6 +71,8 @@
             	document.getElementById("alllux").innerHTML = JSON.parse(result).all_lux; 
             	document.getElementById("alltemp").innerHTML = JSON.parse(result).all_temp; 
 
+
+
             	var lamp = JSON.parse(result).lamp;
             	if (lamp === 0)
             		lamp = "OFF";
@@ -160,7 +162,7 @@
         }                 
     </script>
 </head>
-<body onload="callAPI();">
+<body onload="callAPI()">
     <!--<form>
         <label>First Name :</label>
         <input type="text" id="fName">
@@ -179,8 +181,9 @@
     <p>Temp:<span> <span id="maxtemp"></span> <span id="mintemp"></span> <span id="avgtemp"></span></p>
     <hr>
     <p>Last hour readings (sorted from most recent to least recent):</p>
-    <p>Lux:<span><span id="alllux"></span></p> 
-    <p>Temp:<span><span id="alltemp"></span></p> 
+   
+    <p>Lux:<span><span></span><span id="alllux"></span></p> 
+    <p>Temp:<span><span></span><span id="alltemp"></span></p> 
     <hr>
 
  	<h2>Actuators' Triggers</h2>
