@@ -74,16 +74,16 @@
 
 
             	var lamp = JSON.parse(result).lamp;
-            	if (lamp === 0)
-            		lamp = "OFF";
-            	else
+            	if (lamp === 1)
             		lamp = "ON";
+            	else
+            		lamp = "OFF";
 				document.getElementById("curr_lamp").innerHTML = lamp;
 
 				var led = JSON.parse(result).led;
-				if (led == 0)
+				if (led === 0)
 					led = "RED";
-				else if (led == 1)
+				else if (led === 1)
 					led = "BLUE";
 				else 
 					led = "GREEN";
@@ -151,9 +151,9 @@
             .catch(error => console.log('error', error));
 
             var led = "";
-			if (code == 0)
+			if (code === 0)
 				led = "RED";
-			else if (code == 1)
+			else if (code === 1)
 				led = "BLUE";
 			else 
 				led = "GREEN";    
