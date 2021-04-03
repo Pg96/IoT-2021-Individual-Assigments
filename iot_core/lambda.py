@@ -31,12 +31,12 @@ def lambda_handler(event, context):
         #enable_lux = 0
         #if (int(event['lux']) <= LUX_THRESHOLD and (hour_now >= START_HOUR and hour_now <= END_HOUR)):
         #        enable_lux = 1
-        
+        #print(event)
         lamp_status = int(event['lamp'])
-        print(lamp_status)
+        #print(lamp_status)
         enable_lux = lamp_status
         #if the light is on and we are outside the activity hours
-        if (lamp_status == 1 and int(event['lux']) >= LUX_THRESHOLD and (hour_now <= START_HOUR or hour_now >= END_HOUR)):
+        if (lamp_status == 1 and (int(event['lux']) >= LUX_THRESHOLD or (hour_now <= START_HOUR or hour_now >= END_HOUR))):
                 enable_lux = 0
         
         #print(enable_lux)
