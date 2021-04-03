@@ -16,6 +16,10 @@ def lambda_handler(event, context):
 
     table = boto3.resource("dynamodb").Table("powersaver_readings")
  
+    all_items = table.scan(ProjectionExpression="sample_time,device_data")['Items']
+    latest = sorted(all_items, key=lambda x: x['sample_time'], reverse=True)[0]
+    print(latest)
+ 
     items = table.scan(
         FilterExpression="sample_time >= :date",
         ExpressionAttributeValues={":date": int(last_hour.timestamp())*1000},
@@ -25,11 +29,14 @@ def lambda_handler(event, context):
     #print(items)
     if (len(items) == 0):
         print("empty")
-        return { 'statusCode':200 }
+        return { 'statusCode':200,
+        'latest_lux':int(latest['device_data']['lux']), 
+        'latest_temp':int(latest['device_data']['temp'])       
+        }
     
     # The last element is the latest reading
     i = sorted(items, key=lambda x: x['sample_time'], reverse=True)
-    latest = i[0]
+    #latest = i[0]
     
     #print(i)
 
