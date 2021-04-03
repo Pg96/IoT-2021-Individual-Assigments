@@ -3,9 +3,6 @@ Individual assignments for the IoT 2021 Course @ Sapienza University of Rome
 
 Web dashboard: https://dev867.dyaycgfnuds5z.amplifyapp.com/
 
-
-## TODO : DASHBOARD SCREENSHOT EXAMPLE
-
 ## 1. Questions
 ### 1.1. What is the problem and why do you need IoT?
 The aim of the application developed for this individual assignment is to optimize the power consumption in working places. This is achieved by sensing the environment to detect potential power wastesfulness across rooms inside a building in terms of light and heating system.  
@@ -50,6 +47,12 @@ The **local environment** contains the **nucleo board** with all the sensors and
     - At **cloud level**, the **rule** and **lambdas** that can also be found in the `./iot_core/` folder, a `DynamoDB` table which will store all the sensors' data and actuators' status, the **web dashboard** from `./web_dashboard/` hosted on `AWS Amplify`, which retrieves data from the DB by the means of **REST API's** defined on the `AWS API Gateway`.
 * **High-level architecture diagram**
 ![alt text](images/diagram.png "net")
+
+1. The Local environment communicates with the IoT Core to send the readings from the sensors and to receive the commands to toggle the actuators.  
+2. The IoT Core on the one hand stores the received data in a DynamoDB table and on the other hand calls a lambda to analyze the sensors' readings in order to trigger the activation of the actuators when necessary. 
+3. The web dashboard (on AWS Amplify) retrieves the sensors' readings and the activators' status using an API Gateway, which in turn calls a lambda that reads the data stored inside the Dynamo DB table.
+4. The web dashboard also allows to control the 2 actuators by the means of 2 separate API Gateways which in turn call 2 different lambdas that send the trigger command to the Local environment via the IoT Core.
+
 ## 2. Hands-on Walkthrough
 ### Local Setup
 1) Build the circuit as in the following picture:
@@ -60,9 +63,15 @@ The **local environment** contains the **nucleo board** with all the sensors and
 4) Go to the `./dev/` directory and use the `make flash term` command.
 Now the system will start retrieving data from the sensors and sending them to the IoT core to be checked and, if it is the case, receive the command(s) to toggle the actuators.
 ### Remote setup
-0) Create an application & download the certificates and private keys from the IoT core to be used by the `mosquitto` instance on your local machine (as seen in class).
-1) Set up the IoT core rule as in `./iot_core/rules.sql`. Two actions should be performed: putting the data in a *DynamoDB* table (using `${timestamp()}` as primary key and `${id}` as sort key) in the `device_data` column; sending a message to a lambda function (`./lambda.py`).
+0) Create an application & download the certificates and private keys from the IoT core to be used by the `mosquitto` instance on your local machine.
+1) Set up the IoT core rule as in `./iot_core/rules.sql`. Two actions should be performed: 
+    1. putting the data in a *DynamoDB* table (using `${timestamp()}` as primary key and `${id}` as sort key) in the `device_data` column; 
+    2. sending a message to a lambda function (`./lambda.py`).
 2) Add the other lambdas that can be found in the `./iot_core` folder to aws lambda and set up an *AWS API Gateway* for each one of them.
 3) Create a website on *AWS Amplify* using the code for the web dashboard in `./web_dashboard/index.html`
 
 *Note: some of the steps above may require creating and correctly configuring *IAM* roles in order to work as intended.*
+
+
+## Extra: Web Dashboard Example
+![alt text](images/dashboard.png "Circuit")
