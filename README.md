@@ -4,7 +4,7 @@ Individual assignments for the IoT 2021 Course @ Sapienza University of Rome
 Web dashboard: https://dev867.dyaycgfnuds5z.amplifyapp.com/
 
 
-##TODO : DASHBOARD SCREENSHOT EXAMPLE
+## TODO : DASHBOARD SCREENSHOT EXAMPLE
 
 ## 1. Questions
 ### 1.1. What is the problem and why do you need IoT?
