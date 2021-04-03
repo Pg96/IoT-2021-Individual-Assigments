@@ -21,6 +21,9 @@
         font-family: Arial, Helvetica, sans-serif;
         font-size: 30px;
         }
+    i {
+    	color: #FFFFFF;
+    }
     p, span {
         color: #FF9900;
         font-family: Arial, Helvetica, sans-serif;
@@ -192,5 +195,9 @@
   	<p>LED (status: <span id="curr_led"></span>)</p>
  	<p><button type="button" onclick="triggerLed(0)">R</button>  <button type="button" onclick="triggerLed(2)">G</button> 
  		<button type="button" onclick="triggerLed(1)">B</button> </p>
+
+ 	<i>Note1: If some values are "undefined", it means that all the readings in the database are older than 1 hour</i>
+ 	<p></p>
+ 	<i>Note2: Sorry for the way this dashboard looks, but it is my first time coding a website :).</i>
 </body>
 </html>
