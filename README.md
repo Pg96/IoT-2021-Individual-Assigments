@@ -5,7 +5,7 @@ Web dashboard: https://dev867.dyaycgfnuds5z.amplifyapp.com/
 
 ## 1. Questions
 ### 1.1. What is the problem and why do you need IoT?
-The aim of the application developed for this individual assignment is to optimize the power consumption in working places. This is achieved by sensing the environment to detect potential power wastesfulness across rooms inside a building in terms of light and heating system.  
+The aim of the application developed for this individual assignment is to optimize the power consumption in working places. This is achieved by sensing the environment to detect potential power wastesfulness, in terms of artificial lights and heating/cooling system, in the rooms inside a building.  
 
 In order to achieve this, the two following sensors are employed: 
 - a **photocell**.
@@ -24,12 +24,12 @@ Both sensors gather data **periodically** and send them to the **IoT Core**, whi
 Therefore, the *sensing* activity is **periodic**, but the *actuator's activation* is **event-driven**.
 
 ### 1.2. What data are collected and by which sensors?
-The ambient light intensity and the ambient temperature are measured in parallel (i.e. on two separate threads) at the same time every **30 minutes** to detect variations. 
+The **ambient light intensity** and the **ambient temperature** are measured in parallel (i.e. on two separate threads) at the same time every **30 minutes** to detect variations. 
 - The **photocell**  is a light-controlled variable resistor (i.e. an analog sensor). When the photocell is struck by light it drastically decreases its resistance until it reaches 500Ohm. In the absence of ambient light, the resistance of the photocell will become so high as 50KOhm which practically is non-conductive. 
 **RIOT OS**'s *ADC driver interface* is used to sample the light intensity, which is then mapped into the  **lux** **range 10..100**.  
 As **photocells** are very **inaccurate**, they are mainly used for light-sentsitive applications like "is it light or dark", which makes them good for this application.   
-To avoid potential reading errors that may be due to any factor (e.g. photocell sensor temporarily [partially] covered, incorrect readings, etc.), the  light intensity is measured **once every 1 minute for 5 times**, and an arithmetic average is taken as the reading value. 
-- The **DHT11** is a ultra low cost, basic and **slow** digital sensor for measuring ambient temperature and humidity*. The temperature is measured by a *thermistor* that changes its resistance with temperature, therefore the generated signal is an analog one. The analog signal is converted into a digital one thanks to a very basic chip contained in the sensor. This sensor is good for 0-50**°C** **temperature readings** with a **±2°C** **accuracy**, which makes it suitable for the developed application.  
+To avoid potential reading errors that may be due to several kinds of factors (e.g. the sensor is temporarily [partially] covered, a sudden beam of light hits the sensor, etc.), the  light intensity is measured **once every 1 minute for 5 times**, and an **arithmetic average** is returned as the sensed value. 
+- The **DHT11** is a ultra low cost, basic and **slow** digital sensor for measuring ambient temperature and humidity*. The temperature is measured by a *thermistor* that changes its resistance with temperature, therefore the generated signal is an analog one. The analog signal is converted into a digital one thanks to a very basic chip contained in the sensor. This sensor is good for **0-50°C** **temperature readings** with a **±2°C** **accuracy**, which makes it suitable for the developed application.  
 Differently from the *light intensity*, the temperature is **measured only once** (within the 30-minute interval) as it is less subject to variations and because the sensor is definitely more accurate than the **photocell**. 
 
 The **collective intelligence** that is supposed to emerge from the readings regards the overall usage of artificial lights and heating/cooling systems, which will be used in order to detect power wastefulness.
@@ -40,13 +40,13 @@ Sources: https://learn.adafruit.com/photocells, https://learn.adafruit.com/dht, 
 \* *the humidity specifications are skipped, as they are not used by this application.*
 ### 1.3. What are the connected components, the protocols to connect them and the overall IoT architecture?
 * **Network diagram**  - The network diagram is very similar to the one in the picture below (taken from the [aws](https://aws.amazon.com/blogs/iot/how-to-bridge-mosquitto-mqtt-broker-to-aws-iot/) website).
-![alt text](images/net_diagram.png "net")
-The **local environment** contains the **nucleo board** with all the sensors and actuators described in the previous section, as well as a **MQTT-SN** broker (`mosquitto_rsmb`). A `mosquitto` service is used as a **transparent MQTT** bridge to the **AWS IoT Core** facility. 
-* **Software components** - The overall system components are:
+![alt text](images/net_diagram.png "Network diagram")
+The **local environment** contains the **nucleo board** with all the sensors and actuators described in the previous section, as well as a **MQTT-SN** broker (`mosquitto_rsmb`). A `mosquitto` service is used as a **MQTT-SN/MQTT transparent bridge** to communicate with the **AWS IoT Core** facility. 
+* **Software components** - The main software components are:
     - At **device level**, the code contained in the `./dev/` folder (for the functioning of the nucleo board), the scripts in the `./scripts/` folder (needed to correctly set up the environment), `mqtt_rsmb` and `mqtt` to enable the comminication to/from the IoT core.
-    - At **cloud level**, the **rule** and **lambdas** that can also be found in the `./iot_core/` folder, a `DynamoDB` table which will store all the sensors' data and actuators' status, the **web dashboard** from `./web_dashboard/` hosted on `AWS Amplify`, which retrieves data from the DB by the means of **REST API's** defined on the `AWS API Gateway`.
+    - At **cloud level**, the **rule** and **lambdas** that can also be found in the `./iot_core/` folder, a `DynamoDB` **table** which will store all the sensors' data and actuators' status, the **web dashboard** from `./web_dashboard/` hosted on `AWS Amplify`, which retrieves data from the DB by the means of **REST API's** defined on the `AWS API Gateway`.
 * **High-level architecture diagram**
-![alt text](images/diagram.png "net")
+![alt text](images/diagram.png "Architecture diagram")
 
 1. The Local environment communicates with the IoT Core to send the readings from the sensors and to receive the commands to toggle the actuators.  
 2. The IoT Core on the one hand stores the received data in a DynamoDB table and on the other hand calls a lambda to analyze the sensors' readings in order to trigger the activation of the actuators when necessary. 
@@ -57,21 +57,21 @@ The **local environment** contains the **nucleo board** with all the sensors and
 ### Local Setup
 1) Build the circuit as in the following picture:
 ![alt text](images/circuit/nucleo.jpg "Circuit")
-3) Make sure the `mosquitto` service is correctly running and the bridge to the IoT core is correctly configured (see `./mqtt/bridge.conf).
+3) Make sure the `mosquitto` service is correctly running and the bridge to the IoT core is correctly configured (see `./mqtt/bridge.conf`).
 2) Run the `mqtt_rsmb_run.sh` script (after setting the `MOSQUITTOrsmb_DIR` variable)  to start the MQTT-rsmb broker.
 3) Run the `netsetup.sh` script (after setting the `RIOT_DIR` variable) as `superuser (sudo)`.
 4) Go to the `./dev/` directory and use the `make flash term` command.
-Now the system will start retrieving data from the sensors and sending them to the IoT core to be checked and, if it is the case, receive the command(s) to toggle the actuators.
+Now the board will start retrieving data from the sensors and sending them to the IoT core to be checked and, if it is the case, receive the command(s) to toggle the actuators.
 ### Remote setup
-0) Create an application & download the certificates and private keys from the IoT core to be used by the `mosquitto` instance on your local machine.
-1) Set up the IoT core rule as in `./iot_core/rules.sql`. Two actions should be performed: 
+0) Create an application on *AWS IoT Core* & download the certificates and private keys from the IoT core to be used by the `mosquitto` instance on your local machine.
+1) Set up the *IoT core* rule as in `./iot_core/rules.sql`. Two actions should be linked to the rule: 
     1. putting the data in a *DynamoDB* table (using `${timestamp()}` as primary key and `${id}` as sort key) in the `device_data` column; 
     2. sending a message to a lambda function (`./lambda.py`).
 2) Add the other lambdas that can be found in the `./iot_core` folder to aws lambda and set up an *AWS API Gateway* for each one of them.
 3) Create a website on *AWS Amplify* using the code for the web dashboard in `./web_dashboard/index.html`
 
-*Note: some of the steps above may require creating and correctly configuring *IAM* roles in order to work as intended.*
+*Note: some of the steps above may require creating and correctly configuring roles and policies in the *IAM Console* in order for everything to work as intended.*
 
 
 ## Extra: Web Dashboard Example
-![alt text](images/dashboard.png "Circuit")
+![alt text](images/dashboard.png "Dashboard")
