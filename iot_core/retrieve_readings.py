@@ -37,8 +37,8 @@ def lambda_handler(event, context):
     max_lux = int(max(i, key=lambda x: x['device_data']['lux'])['device_data']['lux'])
     min_lux = int(min(i, key=lambda x: x['device_data']['lux'])['device_data']['lux'])
     
-    max_temp = int(max(i, key=lambda x: x['device_data']['lux'])['device_data']['temp'])
-    min_temp = int(min(i, key=lambda x: x['device_data']['lux'])['device_data']['temp'])
+    max_temp = int(max(i, key=lambda x: x['device_data']['temp'])['device_data']['temp'])
+    min_temp = int(min(i, key=lambda x: x['device_data']['temp'])['device_data']['temp'])
     
     all_lux = []
     all_temp = []
