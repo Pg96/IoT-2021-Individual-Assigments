@@ -41,9 +41,10 @@
 // #define PM_DELAY 5 /* Power Management Wake-up delay */
 
 #define DELAY (60000LU * US_PER_MS) /* 1 minute - Delay between main_loop() iterations */
+//60000LU = 1 minute ; 300000 = 5 minutes
 
-#define TEMP_SLEEP_TIME 2  /* Determines the duration of the LED & buzzer actuators actions */
-#define LIGHT_SLEEP_TIME 1 /* Determines the sleep time among the iterations in the measure_light() loop */
+#define TEMP_SLEEP_TIME 2  /* Determines the duration of the buzzer's sound */
+#define LIGHT_SLEEP_TIME 1 /* Determines the sleep time (60 seconds) between subsequent iterations in the measure_light() loop */
 
 #define TEMP_TOO_LOW 1
 #define TEMP_TOO_HIGH 0
@@ -594,7 +595,7 @@ void *main_loop(void *arg) {
         //puts("msg2 received\n");
 
         char core_str[40];
-        sprintf(core_str, "{\"id\":\"%s\",\"lux\":\"%lu\",\"temp\":\"%lu\"}", EMCUTE_ID, lux, temp);
+        sprintf(core_str, "{\"id\":\"%s\",\"lux\":\"%lu\",\"temp\":\"%lu\",\"lamp\":\"%d\",\"led\":\"%d\"}", EMCUTE_ID, lux, temp, curr_lux, curr_led);
         pub(MQTT_TOPIC, core_str, 0);
 
         xtimer_periodic_wakeup(&last, DELAY);
