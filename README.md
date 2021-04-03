@@ -3,6 +3,9 @@ Individual assignments for the IoT 2021 Course @ Sapienza University of Rome
 
 Web dashboard: https://dev867.dyaycgfnuds5z.amplifyapp.com/
 
+
+##TODO : DASHBOARD SCREENSHOT EXAMPLE
+
 ## 1. Questions
 ### 1.1. What is the problem and why do you need IoT?
 The aim of the application developed for this individual assignment is to optimize the power consumption in working places. This is achieved by sensing the environment to detect potential power wastesfulness across rooms inside a building in terms of light and heating system.  
