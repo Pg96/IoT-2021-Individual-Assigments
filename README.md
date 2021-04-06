@@ -43,8 +43,18 @@ Sources: https://learn.adafruit.com/photocells, https://learn.adafruit.com/dht, 
 ![alt text](images/net_diagram.png "Network diagram")
 The **local environment** contains the **nucleo board** with all the sensors and actuators described in the previous section, as well as a **MQTT-SN** broker (`mosquitto_rsmb`). A `mosquitto` service is used as a **MQTT-SN/MQTT transparent bridge** to communicate with the **AWS IoT Core** facility. 
 * **Software components** - The main software components are:
-    - At **device level**, the code contained in the `./dev/` folder (for the functioning of the nucleo board), the scripts in the `./scripts/` folder (needed to correctly set up the environment), `mqtt_rsmb` and `mqtt` to enable the comminication to/from the IoT core.
-    - At **cloud level**, the **rule** and **lambdas** that can also be found in the `./iot_core/` folder, a `DynamoDB` **table** which will store all the sensors' data and actuators' status, the **web dashboard** from `./web_dashboard/` hosted on `AWS Amplify`, which retrieves data from the DB by the means of **REST API's** defined on the `AWS API Gateway`.
+    - [Device level] The **RIOT application**, which runs on the STM32 nucleo board.
+    - [Device level] The **MOSQUITTO_RSMB** MQTT/MQTTSN broker.
+    - [Device level] The **MOSQUITTO** MQTT broker, which acts as a transparent bridge from the local environment to the IoT Core & vice-versa.
+ 
+    - [Cloud level] The **Thing** on IoT Core.
+    - [Cloud level] The **MQTT Broker** on IoT Core.
+    - [Cloud level] The **Rule** created on IoT Core which listens for incoming data from the board and on the one hand triggers a lambda, and on the other hand stores the data into a DB table.
+    - [Cloud level] The AWS **Lambda** to that performs the checks on the data received from the nucleo board and triggers the actuators.
+    - [Cloud level] The **DynamoDB** table used to store the readings from the sensors.
+    - [Cloud level] The **Web dashboard** hosted on AWS Amplify, which is used to display the data received from the board.
+    - [Cloud level] Some **REST APIs** defined on the AWS API gateway, which is needed to call some additional **lambdas** to access the DB and send commands to the actuators on the board.
+
 * **High-level architecture diagram**
 ![alt text](images/diagram.png "Architecture diagram")
 
