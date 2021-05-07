@@ -35,5 +35,8 @@ USEMODULE += ps
 FEATURES_OPTIONAL += periph_rtc
 FEATURES_REQUIRED += periph_adc
 
+DEV = NUCLEO
+CFLAGS += -DDEVICE='"$(DEV)"'
+
 include $(CURDIR)/Makefile.ethos.conf
 include $(RIOTBASE)/Makefile.include

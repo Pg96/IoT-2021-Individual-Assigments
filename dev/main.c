@@ -40,11 +40,11 @@
 // #define PM_MODE 0  /* Power  Management mode */
 // #define PM_DELAY 5 /* Power Management Wake-up delay */
 
-#define DELAY (300000LU * US_PER_MS) /* 1 minute - Delay between main_loop() iterations */
+#define DELAY (60000LU * US_PER_MS) /* 1 minute - Delay between main_loop() iterations */
 //60000LU = 1 minute ; 300000LU = 5 minutes
 
 #define TEMP_SLEEP_TIME 2  /* Determines the duration of the buzzer's sound */
-#define LIGHT_SLEEP_TIME 60 /* Determines the sleep time (60 seconds) between subsequent iterations in the measure_light() loop */
+#define LIGHT_SLEEP_TIME 1 /* Determines the sleep time (60 seconds) between subsequent iterations in the measure_light() loop */
 
 #define TEMP_TOO_LOW 1
 #define TEMP_TOO_HIGH 0
@@ -620,8 +620,20 @@ void *main_loop(void *arg) {
     //return 0;
 }
 
+static int cmd_board(int argc, char **argv) {
+    (void)argc;
+    (void)argv;
+
+    printf("test\n");
+    const char* s2 = DEVICE;    
+    printf("DEVICE :%s\n",(s2!=NULL)? s2 : "var is NULL");
+
+    return 0;
+}
+
 static const shell_command_t shell_commands[] = {
     //    { "will", "register a last will", cmd_will },
+    {"board", "gets BOARD env var value", cmd_board},
     {NULL, NULL, NULL}};
 
 int main(void) {
