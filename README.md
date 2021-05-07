@@ -1,4 +1,4 @@
-# IoT-2021-Individual-Assigments - Power Saver
+# IoT-2021-Individual-Assigments - Power Saver - #2
 Individual assignments for the IoT 2021 Course @ Sapienza University of Rome
 
 Web dashboard: https://dev867.dyaycgfnuds5z.amplifyapp.com/
