@@ -625,9 +625,13 @@ static int cmd_board(int argc, char **argv) {
     (void)argv;
 
     printf("test\n");
-    const char* s2 = DEVICE;    
-    printf("DEVICE :%s\n",(s2!=NULL)? s2 : "var is NULL");
-
+    //const char* s2 = DEVICE;    
+    //printf("DEVICE :%s\n",(DEVICE == 1)? s2 : "var is NULL");
+    #if NUCLEO == 1
+    printf("USING NUCLEO\n");
+    #else 
+    printf("USING M3\n");
+    #endif
     return 0;
 }
 

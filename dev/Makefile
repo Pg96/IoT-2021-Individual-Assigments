@@ -35,8 +35,9 @@ USEMODULE += ps
 FEATURES_OPTIONAL += periph_rtc
 FEATURES_REQUIRED += periph_adc
 
-DEV = NUCLEO
-CFLAGS += -DDEVICE='"$(DEV)"'
+# if NUCLEO = 1 => an stm32 nucleo board is being used, else => an M3 node is being used
+NUCLEO = 0
+CFLAGS += -DNUCLEO=$(NUCLEO)
 
 include $(CURDIR)/Makefile.ethos.conf
 include $(RIOTBASE)/Makefile.include
