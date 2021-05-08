@@ -67,9 +67,11 @@
 #define MQTT_TOKENS 6 /* The number of tokens (key-value) that will be received by the IoT Core */
 
 /* [Sensors] Stacks for multi-threading & tids placeholders*/
+char stack_loop[THREAD_STACKSIZE_MAIN];
+
+#if NUCLEO == 1
 char stack_lux[THREAD_STACKSIZE_MAIN];
 char stack_temp[THREAD_STACKSIZE_MAIN];
-char stack_loop[THREAD_STACKSIZE_MAIN];
 
 /* Actuators' pins */
 const gpio_t pin_org = GPIO_PIN(PORT_B, 6);  // R
@@ -82,6 +84,7 @@ const gpio_t buzz_pin = GPIO_PIN(PORT_B, 5);
 
 /* DHT11 device */
 dht_t dev;
+#endif 
 
 /* Threads' IDs */
 kernel_pid_t tmain, t1, t2;
@@ -103,8 +106,10 @@ static void *emcute_thread(void *arg) {
 }
 #endif
 
+#if NUCLEO == 1
 int toggle_lamp(int code);
 int toggle_rgbled(int code);
+#endif 
 
 int parse_val(jsmntok_t key, char *command) {
     unsigned int length = key.end - key.start;
@@ -410,6 +415,7 @@ int toggle_lamp(int code) {
 }
 #endif 
 
+# if NUCLEO == 1
 void *measure_light(void *arg) {
     (void)arg;
 
@@ -448,7 +454,9 @@ void *measure_light(void *arg) {
 
     return NULL;
 }
+#endif 
 
+# if NUCLEO == 1
 int toggle_buzzer(void) {
     // gpio_t pin_out = GPIO_PIN(PORT_B, 5);
     // if (gpio_init(pin_out, GPIO_OUT)) {
@@ -466,6 +474,7 @@ int toggle_buzzer(void) {
 
     return 0;
 }
+#endif
 
 #if NUCLEO == 1
 int curr_led = -1;
@@ -498,6 +507,7 @@ int toggle_rgbled(int code) {
 }
 #endif 
 
+#if NUCLEO == 1
 void *measure_temp(void *arg) {
     (void)arg;
 
@@ -534,8 +544,10 @@ void *measure_temp(void *arg) {
 
     return NULL;
 }
+#endif 
 
 
+#if NUCLEO == 1
 int init_sensors(void) {
     int res = 0;
     /* initialize the ADC line */
@@ -561,7 +573,9 @@ int init_sensors(void) {
     }
     return res;
 }
+#endif 
 
+#if NUCLEO == 1
 void *main_loop(void *arg) {
     (void)arg;
     tmain = thread_getpid();
@@ -616,6 +630,7 @@ void *main_loop(void *arg) {
         xtimer_periodic_wakeup(&last, DELAY);
     }
 }
+#endif 
 
 static int cmd_board(int argc, char **argv) {
     (void)argc;
@@ -646,7 +661,7 @@ int main(void) {
     #if NUCLEO == 1
     puts("Setting up ethos and emcute");
     setup_mqtt();
-    #endif 
+ 
 
     printf("Initializing sensors\n");
     int sensors_status = init_sensors();
@@ -657,6 +672,7 @@ int main(void) {
         printf("An error occurred while initializing some sensors, error code: %d\n", sensors_status);
         return 1;
     }
+    #endif
 
     #if NUCLEO == 1
     printf("Initializing actuators\n");
