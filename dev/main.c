@@ -1,5 +1,10 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "timex.h"
+#include "xtimer.h"
 #include "shell.h"
-#include "stdio.h"
 #include "lpsxxx.h"
 #include "lpsxxx_params.h"
 
