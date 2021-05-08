@@ -7,8 +7,11 @@
 #include "shell.h"
 #include "lpsxxx.h"
 #include "lpsxxx_params.h"
+#include "isl29020.h"
+#include "isl29020_params.h"
 
 static lpsxxx_t lpsxxx;
+isl29020_t dev;
 
 
 static void _lpsxxx_usage(char *cmd)
@@ -16,8 +19,15 @@ static void _lpsxxx_usage(char *cmd)
     printf("usage: %s <temperature|pressure>\n", cmd);
 }
 
-static int lpsxxx_handler(int argc, char *argv[])
-{
+
+static int isl29020_handler(int argc, char *argv[]) {
+    (void)argc;
+    (void)argv;
+
+    printf("Light value: %5i LUX\n", isl29020_read(&dev));
+} 
+
+static int lpsxxx_handler(int argc, char *argv[]) {
     if (argc < 2) {
         _lpsxxx_usage(argv[0]);
         return -1;
@@ -45,7 +55,11 @@ static int lpsxxx_handler(int argc, char *argv[])
 int init_sensors(void) {
     int res = 0;
 
-     lpsxxx_init(&lpsxxx, &lpsxxx_params[0]);
+    lpsxxx_init(&lpsxxx, &lpsxxx_params[0]);
+
+    if (isl29020_init(&dev, &isl29020_params[0]) != 0) {
+        res = 1;
+    }
 
     return res;
 }
@@ -73,6 +87,7 @@ static int _cpu_handler(int argc, char **argv)
 }
 
 static const shell_command_t shell_commands[] = {
+    { "isl", "read the isl29020 values", isl29020_handler },
     { "lps", "read the lps331ap values", lpsxxx_handler },
     { "board", "Print the board name", _board_handler },
     { "cpu", "Print the cpu name", _cpu_handler },
