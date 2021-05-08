@@ -157,7 +157,7 @@ void *main_loop(void *arg) {
         printf("TEMP: %lu\n", temp);
         //puts("msg2 received\n");
 
-        char core_str[40];
+        //char core_str[40];
         //sprintf(core_str, "{\"id\":\"%s\",\"lux\":\"%lu\",\"temp\":\"%lu\",\"lamp\":\"%d\",\"led\":\"%d\"}", EMCUTE_ID, lux, temp, curr_lux, curr_led);
         // TODO: enable once MQTT works
         //pub(MQTT_TOPIC, core_str, 0);
