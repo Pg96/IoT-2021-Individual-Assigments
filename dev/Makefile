@@ -16,7 +16,10 @@ DEVELHELP ?= 1
 QUIET ?= 1
 
 # Modules to include:
-#USEMODULE += xtimer
+USEMODULE += xtimer
+USEMODULE += lps331ap
+USEMODULE += isl29020
+
 # For the light sensor
 #USEMODULE += analog_util
 # Temp & Humidity 
