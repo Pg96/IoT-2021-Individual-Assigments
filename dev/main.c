@@ -86,12 +86,14 @@ dht_t dev;
 /* Threads' IDs */
 kernel_pid_t tmain, t1, t2;
 
+#if NUCLEO == 1
 /* [Emcute - MQTT] Stack and  vars */
 static char stack_emcute[THREAD_STACKSIZE_DEFAULT];
 //static msg_t queue[8];
 
 static emcute_sub_t subscriptions[NUMOFSUBS];
 static char topics[NUMOFSUBS][TOPIC_MAXLEN];
+#endif
 
 #if NUCLEO == 1
 static void *emcute_thread(void *arg) {
@@ -595,8 +597,9 @@ void *main_loop(void *arg) {
             lux = msg2.content.value;
         }
 
-        //printf("LUX: %lu\n", lux);
-        //printf("TEMP: %lu\n", temp);
+        
+        printf("LUX: %lu\n", lux);
+        printf("TEMP: %lu\n", temp);
         //puts("msg2 received\n");
 
         /* TODO: Reactivate once MQTT is set up
@@ -635,8 +638,10 @@ int main(void) {
      *  and the ambient temperature using a DHT11 sensor.
      */
 
+    #if NUCLEO == 1
     puts("Setting up ethos and emcute");
     setup_mqtt();
+    #endif 
 
     printf("Initializing sensors\n");
     int sensors_status = init_sensors();
