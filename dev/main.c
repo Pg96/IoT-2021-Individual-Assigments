@@ -408,6 +408,7 @@ int toggle_lamp(int code) {
 
     return 0;
 }
+#endif 
 
 void *measure_light(void *arg) {
     (void)arg;
@@ -466,6 +467,7 @@ int toggle_buzzer(void) {
     return 0;
 }
 
+#if NUCLEO == 1
 int curr_led = -1;
 int toggle_rgbled(int code) {
     /* Avoid re-triggering the same action */
@@ -494,6 +496,7 @@ int toggle_rgbled(int code) {
 
     return 0;
 }
+#endif 
 
 void *measure_temp(void *arg) {
     (void)arg;
@@ -558,7 +561,6 @@ int init_sensors(void) {
     }
     return res;
 }
-#endif 
 
 void *main_loop(void *arg) {
     (void)arg;
