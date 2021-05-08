@@ -2,10 +2,10 @@
 APPLICATION = assignment1
 
 # If no BOARD is found in the environment, use this default:
-BOARD ?= nucleo-f401re
+BOARD ?= iotlab-m3
 
 # This has to be the absolute path to the RIOT base directory:
-RIOTBASE ?= /home/kaosv/Tutorials/RIOT/
+RIOTBASE ?= /senslab/users/priamo/RIOT
 
 # Comment this out to disable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the
@@ -33,11 +33,12 @@ USEMODULE += ps
 
 
 FEATURES_OPTIONAL += periph_rtc
-FEATURES_REQUIRED += periph_adc
+FEATURES_OPTIONAL += periph_adc
 
 # if NUCLEO = 1 => an stm32 nucleo board is being used, else => an M3 node is being used
 NUCLEO = 0
 CFLAGS += -DNUCLEO=$(NUCLEO)
 
-include $(CURDIR)/Makefile.ethos.conf
+include $(CURDIR)/Makefile.net.conf
 include $(RIOTBASE)/Makefile.include
+include $(RIOTMAKE)/default-radio-settings.inc.mk

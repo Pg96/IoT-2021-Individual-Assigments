@@ -524,7 +524,6 @@ void *measure_temp(void *arg) {
 
 int init_sensors(void) {
     int res = 0;
-
     /* initialize the ADC line */
     if (adc_init(ADC_IN_USE) < 0) {
         printf("The attempt to initialize ADC_LINE(%u) failed\n", ADC_IN_USE);
@@ -546,7 +545,6 @@ int init_sensors(void) {
         printf("Failed to connect to DHT sensor\n");
         res |= 2;
     }
-
     return res;
 }
 
@@ -594,30 +592,14 @@ void *main_loop(void *arg) {
         //printf("TEMP: %lu\n", temp);
         //puts("msg2 received\n");
 
+        /* TODO: Reactivate once MQTT is set up
         char core_str[40];
         sprintf(core_str, "{\"id\":\"%s\",\"lux\":\"%lu\",\"temp\":\"%lu\",\"lamp\":\"%d\",\"led\":\"%d\"}", EMCUTE_ID, lux, temp, curr_lux, curr_led);
         pub(MQTT_TOPIC, core_str, 0);
+        */
 
         xtimer_periodic_wakeup(&last, DELAY);
     }
-
-    // POWER SAVING MODE
-    /* Set an RTC-based alarm to trigger wakeup */
-    // const int mode = PM_MODE;
-    // const int delay = PM_DELAY;
-
-    // printf("Setting wakeup from mode %d in %d seconds.\n", mode, delay);
-    // fflush(stdout);
-
-    // struct tm time;
-    // rtc_get_time(&time);
-    // time.tm_sec += delay;
-    // rtc_set_alarm(&time, callback_rtc, "Wakeup alarm");
-
-    // /* Enter deep sleep mode */
-    // pm_set(mode);
-
-    //return 0;
 }
 
 static int cmd_board(int argc, char **argv) {
