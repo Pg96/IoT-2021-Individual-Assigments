@@ -141,6 +141,7 @@ int parse_command(char *command) {
         return 2;
     }
 
+#if NUCLEO == 1
     int activations = 0;
     int acts = 0;
 
@@ -197,6 +198,7 @@ int parse_command(char *command) {
             printf("Key not recognized: %s\n", keyString);
         }
     }
+#endif 
     return 0;
 }
 
