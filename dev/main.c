@@ -658,8 +658,10 @@ int main(void) {
         return 1;
     }
 
+    #if NUCLEO == 1
     printf("Initializing actuators\n");
     int actuators_status = init_actuators();
+    #endif
 
     if (actuators_status == 0)
         puts("All actuators initialized successfully!");
