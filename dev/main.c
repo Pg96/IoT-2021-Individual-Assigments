@@ -358,6 +358,7 @@ int setup_mqtt(void) {
 #endif 
 //static void callback_rtc(void *arg) { puts(arg); }
 
+#if NUCLEO == 1
 int init_actuators(void) {
     /* Initialize lamp pin */
     if (gpio_init(lamp_pin, GPIO_OUT)) {
@@ -531,6 +532,7 @@ void *measure_temp(void *arg) {
     return NULL;
 }
 
+
 int init_sensors(void) {
     int res = 0;
     /* initialize the ADC line */
@@ -556,6 +558,7 @@ int init_sensors(void) {
     }
     return res;
 }
+#endif 
 
 void *main_loop(void *arg) {
     (void)arg;
