@@ -32,6 +32,8 @@ char stack_temp[THREAD_STACKSIZE_MAIN];
 static lpsxxx_t lpsxxx;
 isl29020_t dev;
 
+int last_lux = -1;
+
 void *measure_light(void *arg) {
     (void)arg;
 
@@ -55,6 +57,8 @@ void *measure_light(void *arg) {
     avg = round(avg);
     uint32_t uavg = avg;
 
+    last_lux = avg;
+
     printf("Average lux after %d iterations at a %d-second(s) interval: %lu\n", iterations, LIGHT_SLEEP_TIME, uavg);
 
     msg_t msg;
@@ -65,11 +69,15 @@ void *measure_light(void *arg) {
     return NULL;
 }
 
+int last_temp = -1;
+
 void *measure_temp(void *arg) {
     (void)arg;
 
     int16_t dtemp = 0;
     lpsxxx_read_temp(&lpsxxx, &dtemp);    
+
+    dtemp = dtemp/100;
 
     uint32_t utemp;
     if (dtemp <= 0) { /* Treat negative temperatures as inadmissible (room temperature <= 0 is LOW) */
@@ -77,6 +85,8 @@ void *measure_temp(void *arg) {
     } else {
         utemp = dtemp;
     }
+
+    last_temp = dtemp;
 
     /* Signal to the main thread that this thread's execution has finished */
     msg_t msg;
@@ -86,6 +96,8 @@ void *measure_temp(void *arg) {
     return NULL;
 
 }
+
+int started = -1;
 
 void *main_loop(void *arg) {
     (void)arg;
@@ -215,7 +227,17 @@ static int _cpu_handler(int argc, char **argv)
     return 0;
 }
 
+static int cmd_status(int argc, char *argv[]) {
+    (void)argc;
+    (void)argv;
+
+    printf("%d %d %d\n", started, last_lux, last_temp);
+
+    return 0;
+} 
+
 static const shell_command_t shell_commands[] = {
+    { "status", "get a status report", cmd_status },
     { "isl", "read the isl29020 values", isl29020_handler },
     { "lps", "read the lps331ap values", lpsxxx_handler },
     { "board", "Print the board name", _board_handler },
