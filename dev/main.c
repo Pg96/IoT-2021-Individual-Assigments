@@ -689,9 +689,11 @@ int main(void) {
     }
     #endif
 
+    #if NUCLEO == 1
     puts("Starting main_loop thread...");
     /* Perform sensor readings on a separate thread in order to host a shell on the main thread*/
     thread_create(stack_loop, sizeof(stack_loop), EMCUTE_PRIO, 0, main_loop, NULL, "main_loop");
+    #endif 
     puts("Thread started successfully!");
 
     /* start shell */
