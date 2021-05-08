@@ -93,11 +93,13 @@ static char stack_emcute[THREAD_STACKSIZE_DEFAULT];
 static emcute_sub_t subscriptions[NUMOFSUBS];
 static char topics[NUMOFSUBS][TOPIC_MAXLEN];
 
+#if NUCLEO == 1
 static void *emcute_thread(void *arg) {
     (void)arg;
     emcute_run(CONFIG_EMCUTE_DEFAULT_PORT, EMCUTE_ID);
     return NULL; /* should never be reached */
 }
+#endif
 
 int toggle_lamp(int code);
 int toggle_rgbled(int code);
@@ -191,6 +193,7 @@ int parse_command(char *command) {
     return 0;
 }
 
+#if NUCLEO == 1
 static void on_pub(const emcute_topic_t *topic, void *data, size_t len) {
     char *in = (char *)data;
 
@@ -210,7 +213,9 @@ static void on_pub(const emcute_topic_t *topic, void *data, size_t len) {
     parse_command(comm);
     //puts("");
 }
+#endif 
 
+#if NUCLEO == 1
 static uint8_t get_prefix_len(char *addr) {
     int prefix_len = ipv6_addr_split_int(addr, '/', _IPV6_DEFAULT_PREFIX_LEN);
 
@@ -266,7 +271,9 @@ static int netif_add(char *iface_name, char *addr_str) {
 
     return 0;
 }
+#endif 
 
+#if NUCLEO == 1
 static int pub(char *topic, const char *data, int qos) {
     emcute_topic_t t;
     unsigned flags = EMCUTE_QOS_0;
@@ -346,7 +353,7 @@ int setup_mqtt(void) {
 
     return 0;
 }
-
+#endif 
 //static void callback_rtc(void *arg) { puts(arg); }
 
 int init_actuators(void) {
