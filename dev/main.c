@@ -661,7 +661,7 @@ int main(void) {
     #if NUCLEO == 1
     printf("Initializing actuators\n");
     int actuators_status = init_actuators();
-    #endif
+    
 
     if (actuators_status == 0)
         puts("All actuators initialized successfully!");
@@ -669,6 +669,7 @@ int main(void) {
         printf("An error occurred while initializing some actuators, error code: %d\n", actuators_status);
         return 2;
     }
+    #endif
 
     puts("Starting main_loop thread...");
     /* Perform sensor readings on a separate thread in order to host a shell on the main thread*/
