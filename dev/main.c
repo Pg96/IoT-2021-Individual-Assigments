@@ -29,6 +29,10 @@
 #ifndef EMCUTE_ID
 #define EMCUTE_ID ("power_saver_0")
 
+//TODO: add missing stuff
+
+#endif
+
 /* [Sensors] Stacks for multi-threading & tids placeholders*/
 char stack_loop[THREAD_STACKSIZE_MAIN];
 char stack_lux[THREAD_STACKSIZE_MAIN];
@@ -154,7 +158,7 @@ void *main_loop(void *arg) {
         //puts("msg2 received\n");
 
         char core_str[40];
-        sprintf(core_str, "{\"id\":\"%s\",\"lux\":\"%lu\",\"temp\":\"%lu\",\"lamp\":\"%d\",\"led\":\"%d\"}", EMCUTE_ID, lux, temp, curr_lux, curr_led);
+        //sprintf(core_str, "{\"id\":\"%s\",\"lux\":\"%lu\",\"temp\":\"%lu\",\"lamp\":\"%d\",\"led\":\"%d\"}", EMCUTE_ID, lux, temp, curr_lux, curr_led);
         // TODO: enable once MQTT works
         //pub(MQTT_TOPIC, core_str, 0);
 
