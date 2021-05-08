@@ -25,6 +25,8 @@ static int isl29020_handler(int argc, char *argv[]) {
     (void)argv;
 
     printf("Light value: %5i LUX\n", isl29020_read(&dev));
+
+    return 0;
 } 
 
 static int lpsxxx_handler(int argc, char *argv[]) {
