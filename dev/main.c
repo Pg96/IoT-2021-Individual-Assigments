@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
+
 
 #include "jsmn.h"
 #include "msg.h"
@@ -23,10 +25,17 @@
 
 #define EMCUTE_PRIO (THREAD_PRIORITY_MAIN - 1)
 
+/* MQTT SECTION */
+#ifndef EMCUTE_ID
+#define EMCUTE_ID ("power_saver_0")
+
 /* [Sensors] Stacks for multi-threading & tids placeholders*/
 char stack_loop[THREAD_STACKSIZE_MAIN];
 char stack_lux[THREAD_STACKSIZE_MAIN];
 char stack_temp[THREAD_STACKSIZE_MAIN];
+
+/* Threads' IDs */
+kernel_pid_t tmain, t1, t2;
 
 /* Light and temperature sensors */
 static lpsxxx_t lpsxxx;
@@ -45,7 +54,7 @@ void *measure_light(void *arg) {
 
     printf("Sampling light...\n");
     while (i < iterations) {
-        lux += isl29020_read(&dev)
+        lux += isl29020_read(&dev);
 
         avg += lux;
 
