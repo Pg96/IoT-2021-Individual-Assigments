@@ -16,14 +16,14 @@ DEVELHELP ?= 1
 QUIET ?= 1
 
 # Modules to include:
-USEMODULE += xtimer
+#USEMODULE += xtimer
 # For the light sensor
-USEMODULE += analog_util
+#USEMODULE += analog_util
 # Temp & Humidity 
-USEMODULE += dht
-USEMODULE += fmt
+#USEMODULE += dht
+#USEMODULE += fmt
 # To enable-disable pins
-USEMODULE += periph_gpio
+#USEMODULE += periph_gpio
 # USEMODULE += pm
 
 # Shell support
@@ -32,8 +32,8 @@ USEMODULE += shell_commands
 USEMODULE += ps
 
 
-FEATURES_OPTIONAL += periph_rtc
-FEATURES_OPTIONAL += periph_adc
+#FEATURES_OPTIONAL += periph_rtc
+#FEATURES_OPTIONAL += periph_adc
 
 # if NUCLEO = 1 => an stm32 nucleo board is being used, else => an M3 node is being used
 NUCLEO = 0

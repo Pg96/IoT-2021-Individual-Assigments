@@ -649,8 +649,20 @@ static int cmd_board(int argc, char **argv) {
     return 0;
 }
 
+static int cmd_h(int argc, char **argv) {
+    (void)argc;
+    (void)argv;
+
+    printf("hello\n");
+}
+
+#define MAIN_QUEUE_SIZE     (8)
+static msg_t _main_msg_queue[MAIN_QUEUE_SIZE];
+
+
 static const shell_command_t shell_commands[] = {
     //    { "will", "register a last will", cmd_will },
+    {"h", "send help", cmd_h},
     {"board", "gets BOARD env var value", cmd_board},
     {NULL, NULL, NULL}};
 
@@ -693,9 +705,11 @@ int main(void) {
     puts("Starting main_loop thread...");
     /* Perform sensor readings on a separate thread in order to host a shell on the main thread*/
     thread_create(stack_loop, sizeof(stack_loop), EMCUTE_PRIO, 0, main_loop, NULL, "main_loop");
-    #endif 
     puts("Thread started successfully!");
+    #endif 
 
+    msg_init_queue(_main_msg_queue, MAIN_QUEUE_SIZE);
+    puts("RIOT network stack example application");
     /* start shell */
     char line_buf[SHELL_DEFAULT_BUFSIZE];
     shell_run(shell_commands, line_buf, SHELL_DEFAULT_BUFSIZE);
