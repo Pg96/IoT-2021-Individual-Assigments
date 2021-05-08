@@ -654,6 +654,8 @@ static int cmd_h(int argc, char **argv) {
     (void)argv;
 
     printf("hello\n");
+
+    return 0;
 }
 
 #define MAIN_QUEUE_SIZE     (8)
