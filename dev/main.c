@@ -209,6 +209,9 @@ static int pub(char *topic, const char *data, int qos) {
             break;
     }
 
+    printf("Trying to connect to:"):
+    printf("%s\n", MQTT_TOPIC);
+
     t.name = MQTT_TOPIC;
     if (emcute_reg(&t) != EMCUTE_OK) {
         puts("[MQTT] PUB ERROR: Unable to obtain Topic ID");
@@ -233,6 +236,9 @@ int setup_mqtt(void) {
     //netif_add("4", "2001:0db8:0:f101::2");
     //netif_add("4", NUCLEO_ADDR);
     // connect to MQTT-SN broker
+
+    xtimer_sleep(60);
+
     printf("Connecting to MQTT-SN broker %s port %d.\n", SERVER_ADDR, SERVER_PORT);
 
     sock_udp_ep_t gw = {
