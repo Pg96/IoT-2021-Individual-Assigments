@@ -91,6 +91,9 @@ int parse_val(jsmntok_t key, char *command) {
     return val;
 }
 
+int toggle_rgbled(int code);
+
+
 /* Parse the reply from the IoT Core*/
 int parse_command(char *command) {
     jsmn_parser parser;
@@ -269,7 +272,7 @@ int setup_mqtt(void) {
     return 0;
 }
 
-
+int curr_lux = -1;
 
 int curr_led = -1;
 int toggle_rgbled(int code) {
