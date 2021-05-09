@@ -8,6 +8,9 @@
 #include "msg.h"
 #include "thread.h"
 
+#include "net/emcute.h"
+#include "net/ipv6/addr.h"
+
 #include "timex.h"
 #include "xtimer.h"
 #include "shell.h"
@@ -16,6 +19,8 @@
 #include "isl29020.h"
 #include "isl29020_params.h"
 #include "periph/gpio.h"
+
+#define JSMN_HEADER
 
 #define LIGHT_ITER 5 /* Light measurement - number of iterations */
 
@@ -35,10 +40,23 @@
 #define EMCUTE_ID ("power_saver_0")
 #endif
 
-//TODO: add missing MQTT stuff
+#define _IPV6_DEFAULT_PREFIX_LEN (64U)
+
+#define NUMOFSUBS (16U)
+#define TOPIC_MAXLEN (64U)
+
+#define MQTT_TOKENS 6 /* The number of tokens (key-value) that will be received by the IoT Core */
+
 
 #define MAIN_QUEUE_SIZE     (8)
 static msg_t _main_msg_queue[MAIN_QUEUE_SIZE];
+
+/* [Emcute - MQTT] Stack and  vars */
+static char stack_emcute[THREAD_STACKSIZE_DEFAULT];
+//static msg_t queue[8];
+
+static emcute_sub_t subscriptions[NUMOFSUBS];
+static char topics[NUMOFSUBS][TOPIC_MAXLEN];
 
 
 /* [Sensors] Stacks for multi-threading & tids placeholders*/
@@ -52,6 +70,203 @@ kernel_pid_t tmain, t1, t2;
 /* Light and temperature sensors */
 static lpsxxx_t lpsxxx;
 isl29020_t dev;
+
+static void *emcute_thread(void *arg) {
+    (void)arg;
+    emcute_run(CONFIG_EMCUTE_DEFAULT_PORT, EMCUTE_ID);
+    return NULL; /* should never be reached */
+}
+
+int parse_val(jsmntok_t key, char *command) {
+    unsigned int length = key.end - key.start;
+    char keyString[length + 1];
+    memcpy(keyString, &command[key.start], length);
+    keyString[length] = '\0';
+    //printf("Val: %s\n", keyString);
+
+    int val = atoi(keyString);
+
+    return val;
+}
+
+/* Parse the reply from the IoT Core*/
+int parse_command(char *command) {
+    jsmn_parser parser;
+    jsmntok_t tokens[MQTT_TOKENS];
+
+    jsmn_init(&parser);
+
+    int r = jsmn_parse(&parser, command, strlen(command), tokens, 10);
+
+    if (r < 0) {
+        printf("Failed to parse JSON: %d\n", r);
+        return 1;
+    }
+    if (r < 1 || tokens[0].type != JSMN_OBJECT) {
+        printf("Object expected\n");
+        return 2;
+    }
+
+
+    int activations = 0;
+    int acts = 0;
+
+    // JSON STRUCT: {"acts":"1|2"", [lux":"0|1"], ["led":"0|1|2"]} ('[]' mean optional)
+    for (int i = 1; i < MQTT_TOKENS; i += 2) {
+        jsmntok_t key = tokens[i];
+        unsigned int length = key.end - key.start;
+        char keyString[length + 1];
+        memcpy(keyString, &command[key.start], length);
+        keyString[length] = '\0';
+        //printf("Key: %s\n", keyString);
+
+        if (strcmp(keyString, "acts") == 0) {
+            int val = parse_val(tokens[i + 1], command);
+
+            if (val < 1 || val > 2) {
+                printf("An invalid number of actuator commands was passed: %d", val);
+                return 7;
+            }
+
+            activations = val;
+        }
+        else if (strcmp(keyString, "lux") == 0) {
+            int val = parse_val(tokens[i + 1], command);
+
+            if (val < 0 || val > 1) {
+                printf("An invalid value was supplied for lux: %d", val);
+                return 4;
+            }
+
+            //toggle_lamp(val);
+
+            acts++;
+            if (acts == activations) {
+                //puts("LuBreak");
+                break;
+            }
+        } else if (strcmp(keyString, "led") == 0) {
+            int val = parse_val(tokens[i + 1], command);
+
+            if (val < 0 || val > 2) {
+                printf("An invalid value was supplied for temp: %d", val);
+                return 5;
+            }
+
+            toggle_rgbled(val);
+
+            acts++;
+            if (acts == activations) {
+                //puts("LeBreak");
+                break;
+            }
+        } else {
+            printf("Key not recognized: %s\n", keyString);
+        }
+    }
+ 
+    return 0;
+}
+
+static void on_pub(const emcute_topic_t *topic, void *data, size_t len) {
+    char *in = (char *)data;
+
+    char comm[len + 1];
+
+    printf("### got publication for topic '%s' [%i] ###\n",
+           topic->name, (int)topic->id);
+    for (size_t i = 0; i < len; i++) {
+        //printf("%c", in[i]);
+
+        comm[i] = in[i];
+    }
+    comm[len] = '\0';
+
+    printf("%s\n", comm);
+
+    parse_command(comm);
+    //puts("");
+}
+
+static int pub(char *topic, const char *data, int qos) {
+    emcute_topic_t t;
+    unsigned flags = EMCUTE_QOS_0;
+
+    switch (qos) {
+        case 1:
+            flags |= EMCUTE_QOS_1;
+            break;
+        case 2:
+            flags |= EMCUTE_QOS_2;
+            break;
+        default:
+            flags |= EMCUTE_QOS_0;
+            break;
+    }
+
+    t.name = MQTT_TOPIC;
+    if (emcute_reg(&t) != EMCUTE_OK) {
+        puts("[MQTT] PUB ERROR: Unable to obtain Topic ID");
+        return 1;
+    }
+    if (emcute_pub(&t, data, strlen(data), flags) != EMCUTE_OK) {
+        printf("[MQTT] PUB ERROR: unable to publish data to topic '%s [%i]'\n", t.name, (int)t.id);
+        return 1;
+    }
+
+    printf("[MQTT] PUB SUCCESS: Published %s on topic %s\n", data, topic);
+    return 0;
+}
+
+int setup_mqtt(void) {
+    /* initialize our subscription buffers */
+    memset(subscriptions, 0, (NUMOFSUBS * sizeof(emcute_sub_t)));
+
+    /* start the emcute thread */
+    thread_create(stack_emcute, sizeof(stack_emcute), EMCUTE_PRIO, 0, emcute_thread, NULL, "emcute");
+    //Adding address to network interface
+    //netif_add("4", "2001:0db8:0:f101::2");
+    //netif_add("4", NUCLEO_ADDR);
+    // connect to MQTT-SN broker
+    printf("Connecting to MQTT-SN broker %s port %d.\n", SERVER_ADDR, SERVER_PORT);
+
+    sock_udp_ep_t gw = {
+        .family = AF_INET6,
+        .port = SERVER_PORT};
+
+    char *message = "connected";
+    size_t len = strlen(message);
+
+    /* parse address */
+    if (ipv6_addr_from_str((ipv6_addr_t *)&gw.addr.ipv6, SERVER_ADDR) == NULL) {
+        printf("error parsing IPv6 address\n");
+        return 1;
+    }
+
+    if (emcute_con(&gw, true, MQTT_TOPIC, message, len, 0) != EMCUTE_OK) {
+        printf("error: unable to connect to [%s]:%i\n", SERVER_ADDR, (int)gw.port);
+        return 1;
+    }
+
+    printf("Successfully connected to gateway at [%s]:%i\n", SERVER_ADDR, (int)gw.port);
+
+    // setup subscription to topic
+
+    unsigned flags = EMCUTE_QOS_0;
+    subscriptions[0].cb = on_pub;
+    strcpy(topics[0], MQTT_TOPIC_IN);
+    subscriptions[0].topic.name = MQTT_TOPIC_IN;
+
+    if (emcute_sub(&subscriptions[0], flags) != EMCUTE_OK) {
+        printf("error: unable to subscribe to %s\n", MQTT_TOPIC_IN);
+        return 1;
+    }
+
+    printf("Now subscribed to %s\n", MQTT_TOPIC_IN);
+
+    return 0;
+}
+
 
 
 int curr_led = -1;
@@ -202,10 +417,9 @@ void *main_loop(void *arg) {
         printf("TEMP: %lu\n", temp);
         //puts("msg2 received\n");
         
-        // TODO: re-enable once MQTT works
-        //char core_str[40];
-        //sprintf(core_str, "{\"id\":\"%s\",\"lux\":\"%lu\",\"temp\":\"%lu\",\"lamp\":\"%d\",\"led\":\"%d\"}", EMCUTE_ID, lux, temp, curr_lux, curr_led);
-        //pub(MQTT_TOPIC, core_str, 0);
+        char core_str[40];
+        sprintf(core_str, "{\"id\":\"%s\",\"lux\":\"%lu\",\"temp\":\"%lu\",\"lamp\":\"%d\",\"led\":\"%d\"}", EMCUTE_ID, lux, temp, curr_lux, curr_led);
+        pub(MQTT_TOPIC, core_str, 0);
 
         xtimer_periodic_wakeup(&last, DELAY);
     }
@@ -317,6 +531,9 @@ static const shell_command_t shell_commands[] = {
 };
 
 int main(void) {
+
+    puts("Setting up ethos and emcute");
+    setup_mqtt();
 
     printf("Initializing sensors\n");
     int sensors_status = init_sensors();

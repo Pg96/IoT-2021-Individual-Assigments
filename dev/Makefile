@@ -44,8 +44,14 @@ USEMODULE += gnrc_rpl
 USEMODULE += auto_init_gnrc_rpl
 # This application dumps received packets to STDIO using the pktdump module
 USEMODULE += gnrc_pktdump
-# Additional networking modules that can be dropped if not needed
+# Additional networking mdules that can be dropped if not needed
 USEMODULE += gnrc_icmpv6_echo
+
+USEMODULE += gnrc_ipv6_default
+USEMODULE += emcute
+SERVER_ADDR = 2001:660:3207:400::61
+SERVER_PORT = 1885
+
 # Add also the shell, some shell commands
 USEMODULE += shell
 USEMODULE += shell_commands
@@ -53,6 +59,16 @@ USEMODULE += ps
 USEMODULE += netstats_l2
 USEMODULE += netstats_ipv6
 USEMODULE += netstats_rpl
+MQTT_TOPIC = localgateway_to_awsiot
+MQTT_TOPIC_IN = awsiot_to_localgateway
+CFLAGS += -DSERVER_ADDR='"$(SERVER_ADDR)"'
+CFLAGS += -DSERVER_PORT=$(SERVER_PORT)
+CFLAGS += -DMQTT_TOPIC='"$(MQTT_TOPIC)"'
+CFLAGS += -DMQTT_TOPIC_IN='"$(MQTT_TOPIC_IN)"'
+
+ifneq (,$(EMCUTE_ID))
+  CFLAGS += -DEMCUTE_ID=\"$(EMCUTE_ID)\"
+endif
 
 # Set a custom channel if needed
 include $(RIOTMAKE)/default-radio-settings.inc.mk
