@@ -237,7 +237,7 @@ int setup_mqtt(void) {
     //netif_add("4", NUCLEO_ADDR);
     // connect to MQTT-SN broker
 
-    xtimer_sleep(60);
+    xtimer_sleep(20);
 
     printf("Connecting to MQTT-SN broker %s port %d.\n", SERVER_ADDR, SERVER_PORT);
 
