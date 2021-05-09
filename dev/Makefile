@@ -49,7 +49,7 @@ USEMODULE += gnrc_icmpv6_echo
 
 USEMODULE += gnrc_ipv6_default
 USEMODULE += emcute
-SERVER_ADDR = 2001:660:3207:400::66
+SERVER_ADDR = 2001:660:3207:400::61
 SERVER_PORT = 1885
 
 # Add also the shell, some shell commands
