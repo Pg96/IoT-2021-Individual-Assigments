@@ -209,9 +209,6 @@ static int pub(char *topic, const char *data, int qos) {
             break;
     }
 
-    printf("Trying to connect to:"):
-    printf("%s\n", MQTT_TOPIC);
-
     t.name = MQTT_TOPIC;
     if (emcute_reg(&t) != EMCUTE_OK) {
         puts("[MQTT] PUB ERROR: Unable to obtain Topic ID");
