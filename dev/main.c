@@ -15,6 +15,7 @@
 #include "lpsxxx_params.h"
 #include "isl29020.h"
 #include "isl29020_params.h"
+#include "periph/gpio.h"
 
 #define LIGHT_ITER 5 /* Light measurement - number of iterations */
 
@@ -23,15 +24,19 @@
 
 #define LIGHT_SLEEP_TIME 1 /* Determines the sleep time (60 seconds) between subsequent iterations in the measure_light() loop */
 
+#define TEMP_TOO_LOW 1
+#define TEMP_TOO_HIGH 0
+#define TEMP_OK 2
+
 #define EMCUTE_PRIO (THREAD_PRIORITY_MAIN - 1)
 
 /* MQTT SECTION */
 #ifndef EMCUTE_ID
 #define EMCUTE_ID ("power_saver_0")
-
-//TODO: add missing stuff
-
 #endif
+
+//TODO: add missing MQTT stuff
+
 
 /* [Sensors] Stacks for multi-threading & tids placeholders*/
 char stack_loop[THREAD_STACKSIZE_MAIN];
@@ -45,8 +50,44 @@ kernel_pid_t tmain, t1, t2;
 static lpsxxx_t lpsxxx;
 isl29020_t dev;
 
-int last_lux = -1;
 
+int curr_led = -1;
+int toggle_rgbled(int code) {
+    /* Avoid re-triggering the same action */
+    if (curr_led == code)
+        return 0;
+    curr_led = code;
+
+    /* Clear the colors before setting them again */
+    gpio_clear(LED0_PIN);
+    gpio_clear(LED1_PIN);
+    gpio_clear(LED2_PIN);
+
+    switch (code) {
+        case TEMP_TOO_HIGH:  // Red
+            gpio_set(LED0_PIN);
+            break;
+        case TEMP_TOO_LOW:  // Orange [Blue - not present in IoT Lab]
+            gpio_set(LED1_PIN);
+            break;
+        case TEMP_OK:  // Green         /* IDEA: might use Yellow for major inconsistencies */
+            gpio_set(LED2_PIN);
+            break;
+    }
+
+    return 0;
+}
+
+int init_actuators(void) {
+    gpio_init(LED0_PIN, GPIO_OUT);
+    gpio_init(LED1_PIN, GPIO_OUT);
+    gpio_init(LED2_PIN, GPIO_OUT);
+    gpio_set(LED0_PIN);
+    gpio_set(LED1_PIN);
+    gpio_set(LED2_PIN);
+}
+
+int last_lux = -1;
 void *measure_light(void *arg) {
     (void)arg;
 
@@ -83,7 +124,6 @@ void *measure_light(void *arg) {
 }
 
 int last_temp = -1;
-
 void *measure_temp(void *arg) {
     (void)arg;
 
@@ -156,10 +196,10 @@ void *main_loop(void *arg) {
         printf("LUX: %lu\n", lux);
         printf("TEMP: %lu\n", temp);
         //puts("msg2 received\n");
-
+        
+        // TODO: re-enable once MQTT works
         //char core_str[40];
         //sprintf(core_str, "{\"id\":\"%s\",\"lux\":\"%lu\",\"temp\":\"%lu\",\"lamp\":\"%d\",\"led\":\"%d\"}", EMCUTE_ID, lux, temp, curr_lux, curr_led);
-        // TODO: enable once MQTT works
         //pub(MQTT_TOPIC, core_str, 0);
 
         xtimer_periodic_wakeup(&last, DELAY);
@@ -205,6 +245,18 @@ static int lpsxxx_handler(int argc, char *argv[]) {
     return 0;
 }
 
+static int cmd_toggle_led(int argc char *argv[]) {
+    if (argc < 2) {
+        printf("Please provide the led code: {0, 1, 2}");
+        return -1;
+    }
+
+    int code = atoi(argv[1]);
+    printf("Setting led to: %d\n", code);
+    toggle_rgbled(code);
+    
+    return 0;
+}
 
 int init_sensors(void) {
     int res = 0;
@@ -244,13 +296,14 @@ static int cmd_status(int argc, char *argv[]) {
     (void)argc;
     (void)argv;
 
-    printf("%d %d %d\n", started, last_lux, last_temp);
+    printf("%d %d %d\n", last_lux, last_temp, curr_led);
 
     return 0;
 } 
 
 static const shell_command_t shell_commands[] = {
     { "status", "get a status report", cmd_status },
+    { "led", "toggle led", cmd_toggle_led },
     { "isl", "read the isl29020 values", isl29020_handler },
     { "lps", "read the lps331ap values", lpsxxx_handler },
     { "board", "Print the board name", _board_handler },
@@ -270,7 +323,17 @@ int main(void) {
         return 1;
     }
 
-    // TODO: init actuators
+    printf("Initializing actuators\n");
+    int actuators_status = init_actuators();
+    
+
+    if (actuators_status == 0)
+        puts("All actuators initialized successfully!");
+    else {
+        printf("An error occurred while initializing some actuators, error code: %d\n", actuators_status);
+        return 2;
+    }
+    
 
     puts("Starting main_loop thread...");
     /* Perform sensor readings on a separate thread in order to host a shell on the main thread*/

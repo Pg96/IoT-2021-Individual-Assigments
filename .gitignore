@@ -2,6 +2,7 @@
 ./dev/bin/
 bin/
 .vscode/
+oldmain.c 
 
 # Prerequisites
 *.d
