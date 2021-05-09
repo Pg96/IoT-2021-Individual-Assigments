@@ -37,6 +37,9 @@
 
 //TODO: add missing MQTT stuff
 
+#define MAIN_QUEUE_SIZE     (8)
+static msg_t _main_msg_queue[MAIN_QUEUE_SIZE];
+
 
 /* [Sensors] Stacks for multi-threading & tids placeholders*/
 char stack_loop[THREAD_STACKSIZE_MAIN];
@@ -335,6 +338,9 @@ int main(void) {
         printf("An error occurred while initializing some actuators, error code: %d\n", actuators_status);
         return 2;
     }
+
+    msg_init_queue(_main_msg_queue, MAIN_QUEUE_SIZE);
+    puts("RIOT network stack example application");
     
 
     puts("Starting main_loop thread...");

@@ -42,5 +42,5 @@ USEMODULE += ps
 NUCLEO = 0
 CFLAGS += -DNUCLEO=$(NUCLEO)
 
-#include $(CURDIR)/Makefile.net.conf
+include $(CURDIR)/Makefile.net.conf
 include $(RIOTBASE)/Makefile.include
