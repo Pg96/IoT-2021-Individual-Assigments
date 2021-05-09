@@ -85,6 +85,8 @@ int init_actuators(void) {
     gpio_set(LED0_PIN);
     gpio_set(LED1_PIN);
     gpio_set(LED2_PIN);
+
+    return 0;
 }
 
 int last_lux = -1;
@@ -245,7 +247,7 @@ static int lpsxxx_handler(int argc, char *argv[]) {
     return 0;
 }
 
-static int cmd_toggle_led(int argc char *argv[]) {
+static int cmd_toggle_led(int argc, char *argv[]) {
     if (argc < 2) {
         printf("Please provide the led code: {0, 1, 2}");
         return -1;
@@ -254,7 +256,7 @@ static int cmd_toggle_led(int argc char *argv[]) {
     int code = atoi(argv[1]);
     printf("Setting led to: %d\n", code);
     toggle_rgbled(code);
-    
+
     return 0;
 }
 
