@@ -20,6 +20,8 @@
 #include "isl29020_params.h"
 #include "periph/gpio.h"
 
+#define 	CONFIG_EMCUTE_DEFAULT_PORT   (1883U)
+
 #define JSMN_HEADER
 
 #define LIGHT_ITER 5 /* Light measurement - number of iterations */
