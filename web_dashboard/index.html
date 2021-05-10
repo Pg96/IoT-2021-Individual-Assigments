@@ -24,6 +24,39 @@
     i {
     	color: #FFFFFF;
     }
+    pre {
+  outline: 1px solid #ccc;
+  padding: 5px; margin:
+  5px;
+}
+
+.string {
+  color: #008000;
+}
+
+.number {
+  color: #0000ff;
+}
+
+.boolean {
+  color: #b22222;
+}
+
+.null {
+  color: #808080;
+}
+
+.key {
+  color: #000000;
+}
+table, th, td {
+  border: 1px solid black;
+  width: 100%;
+        font-family: Arial, Helvetica, sans-serif;
+
+        color: #FF9900;
+
+}
     p, span {
         color: #FF9900;
         font-family: Arial, Helvetica, sans-serif;
@@ -37,6 +70,100 @@
         margin-left: 20px;
         }
     </style>
+
+</head>
+
+<body onload="callAPI()">
+
+    <h1> DEBUG </h1>
+    
+
+    <div id="myoutputdiv"></div>
+    <pre id="tst2"></pre>
+
+
+    <hr>
+    <p>
+        <div id="tst">
+        <span id="dbg"></span><span id="dbg1"></span><span id="dbg2"></span>
+        </div>
+    </p>
+
+ 	<h1> IoT 2021 Dashboard </h1>
+
+ 	<h2>Sensors' Readings</h2>
+    <p>Latest sensor values:</p>  <p id="pllux">Lux: <span></span></span><span id="llux"></span></p> <p id="pltmp">Temp: <span><span id="ltemp"></span></p>
+    <hr>
+    <p>Max, min, avg for each device</p>
+   
+    <p id="pslux">Lux: 
+    <table id="lmaxminavg"> 
+    <thead>
+    <tr>
+        <th>device</th>
+        <th>max</th>
+        <th>min</th>
+        <th>avg</th>
+    </tr>
+    </table>
+    </p> 
+
+    <p id="pstmp">Temp:
+    <table id="tmaxminavg"> 
+    <thead>
+    <tr>
+        <th>device</th>
+        <th>max</th>
+        <th>min</th>
+        <th>avg</th>
+    </tr>
+    </table>
+    </p>
+
+    <hr>
+    <p>Last hour readings (sorted from most recent to least recent):</p>
+   
+    <p id="al">Lux:</p> 
+    <p id="alltemp">Temp:</p>     
+    <hr>
+    <p><b>Aggregated</b> max, min, avg - from <b>all</b> devices - in the last hour:</p> 
+
+    <p>Lux: <span><span id="maxlux"></span> <span id="minlux"></span> <span id="avglux"></span></p>
+    <table id="agglux"> 
+    <thead>
+    <tr>
+        <th>max</th>
+        <th>min</th>
+        <th>avg</th>
+    </tr>
+    </table>
+    <p>Temp:<span> <span id="maxtemp"></span> <span id="mintemp"></span> <span id="avgtemp"></span></p>
+    <table id="aggtemp"> 
+    <thead>
+    <tr>
+        <th>max</th>
+        <th>min</th>
+        <th>avg</th>
+    </tr>
+    </table>    
+
+    <hr>
+
+ 	<h2>Actuators' Triggers</h2>
+ 	<p>Lamp <!--(status: <span id="curr_lamp"></span>) --></p>
+    <select name="device" id="devlamp">
+    </select>
+ 	<p><button type="button" onclick="triggerLamp(1)">ON</button>  <button type="button" onclick="triggerLamp(0)">OFF</button>  </p>
+  	<p>LED <!--(status: <span id="curr_led"></span>) --></p>
+    <select name="device" id="devled">
+    </select>    
+ 	<p><button type="button" onclick="triggerLed(0)">R</button>  <button type="button" onclick="triggerLed(2)">G</button> 
+ 		<button type="button" onclick="triggerLed(1)">B</button> </p>
+
+ 	<i>Note1: If some values are "undefined", it means that all the readings in the database are older than 1 hour</i>
+ 	<p></p>
+ 	<i>Note2: Sorry for the way this dashboard looks, but it is my first time coding a website :).</i>
+
     <script>
         var callAPI = () =>{
             // instantiate a headers object
@@ -54,50 +181,129 @@
             };
             // make API call with parameters and use promises to get response
             fetch("https://itixl6i4qe.execute-api.us-east-1.amazonaws.com/dev", requestOptions)
+            //.then(response => response.json())
             .then(response => response.text())
-            //.then(result => alert(JSON.parse(result).body))
-            //{"statusCode": 200, "latest_lux": 22, "latest_temp": 24, "lux_max": 22, "lux_min": 22, "lux_avg": 22.0, "temp_max": 24, "temp_min": 24, "temp_avg": 24.0}
-            //.then(result =>  document.getElementById("llux").innerHTML = JSON.parse(result).latest_lux)
             
             .then(function (result) {
-            	document.getElementById("llux").innerHTML = JSON.parse(result).latest_lux;
-            	document.getElementById("ltemp").innerHTML = JSON.parse(result).latest_temp;
+                document.getElementById("dbg").innerHTML = result;
+                //console.log(result);
 
-            	document.getElementById("maxlux").innerHTML = JSON.parse(result).lux_max;
-            	document.getElementById("minlux").innerHTML = JSON.parse(result).lux_min;
-            	document.getElementById("avglux").innerHTML = JSON.parse(result).lux_avg;
+                obj = JSON.parse(result);
+                
 
-            	document.getElementById("maxtemp").innerHTML = JSON.parse(result).temp_max;
-            	document.getElementById("mintemp").innerHTML = JSON.parse(result).temp_min;
-            	document.getElementById("avgtemp").innerHTML = JSON.parse(result).temp_avg; 
+                //document.getElementById("tst2").innerHTML = JSON.stringify(result, null, '\t');
 
-            	document.getElementById("alllux").innerHTML = JSON.parse(result).all_lux; 
-            	document.getElementById("alltemp").innerHTML = JSON.parse(result).all_temp; 
+                //jsonDisplay.jsonstring = JSON.stringify(obj, null, '\t');
+                //jsonDisplay.outputDivID = "myoutputdiv";
+                //jsonDisplay.outputPretty(JSON.stringify(obj, null, '\t'));
+
+                devs = obj.devs;
+                for (i = 0; i < devs.length; i++) {
+                    dev = devs[i]
+
+                    var newSpan = document.createElement('span');
+                    document.getElementById('pllux').appendChild(newSpan);
+                    newSpan.innerHTML = dev + ": " + obj.dev_data[dev].latest_lux;
+                    var newSpan2 = document.createElement('span');
+                    document.getElementById('pllux').appendChild(newSpan2);
+                    //newSpan2.innerHTML = obj.dev_data[dev].latest_lux;
+
+                    var newSpan3 = document.createElement('span');
+                    document.getElementById('pltmp').appendChild(newSpan3);
+                    newSpan3.innerHTML = dev+ ": "+  obj.dev_data[dev].latest_temp;
+                    var newSpan4 = document.createElement('span');
+                    document.getElementById('pltmp').appendChild(newSpan4);
+                    //newSpan4.innerHTML =  dev+ ": "+  obj.dev_data[dev].latest_temp;
+
+                    var table = document.getElementById("lmaxminavg");
+                    var row = table.insertRow();
+                    var cell1 = row.insertCell();
+                    var cell2 = row.insertCell();
+                    var cell3 = row.insertCell();
+                    var cell4 = row.insertCell();
+                    cell1.innerHTML = dev;
+                    cell2.innerHTML = obj.dev_data[dev].lux_max;
+                    cell3.innerHTML = obj.dev_data[dev].lux_min;
+                    cell4.innerHTML = obj.dev_data[dev].lux_avg;
+
+                    var table = document.getElementById("tmaxminavg");
+                    var row = table.insertRow();
+                    var cell1t = row.insertCell();
+                    var cell2t = row.insertCell();
+                    var cell3t = row.insertCell();
+                    var cell4t = row.insertCell();
+                    cell1t.innerHTML = dev;
+                    cell2t.innerHTML = obj.dev_data[dev].tmp_max;
+                    cell3t.innerHTML = obj.dev_data[dev].tmp_min;
+                    cell4t.innerHTML = obj.dev_data[dev].tmp_avg;
+
+                    //alllux alltemp
+                    var newSpan5 = document.createElement('span');
+                    document.getElementById('al').appendChild(newSpan5);
+                    newSpan5.innerHTML = dev + ": " + obj.dev_data[dev].all_lux;
+                    var newSpan6 = document.createElement('span');
+                    document.getElementById('al').appendChild(newSpan6);
+
+                    var newSpan7 = document.createElement('span');
+                    document.getElementById('alltemp').appendChild(newSpan7);
+                    newSpan7.innerHTML = dev + ": " + obj.dev_data[dev].all_temp;
+                    var newSpan8 = document.createElement('span');
+                    document.getElementById('alltemp').appendChild(newSpan8);   
+
+                    //agglux aggtemp                 
+                    var table = document.getElementById("agglux");
+                    var row = table.insertRow();
+                    var cell2 = row.insertCell();
+                    var cell3 = row.insertCell();
+                    var cell4 = row.insertCell();
+                    cell2.innerHTML = obj.lux_max;
+                    cell3.innerHTML = obj.lux_min;
+                    cell4.innerHTML = obj.lux_avg;
+
+
+                    var table = document.getElementById("aggtemp");
+                    var row = table.insertRow();
+                    var cell2 = row.insertCell();
+                    var cell3 = row.insertCell();
+                    var cell4 = row.insertCell();
+                    cell2.innerHTML = obj.temp_max;
+                    cell3.innerHTML = obj.temp_min;
+                    cell4.innerHTML = obj.temp_avg;
+
+                    var x = document.getElementById("devlamp");
+                    var option = document.createElement("option");
+                    option.text = dev;
+                    x.add(option);
+
+                    var x = document.getElementById("devled");
+                    var option = document.createElement("option");
+                    option.text = dev;
+                    x.add(option);
+                }
+
+
+                //var lamp = JSON.parse(result).lamp;
+                //if (lamp === 1)
+                //    lamp = "ON";
+                //else
+                //    lamp = "OFF";
+                //document.getElementById("curr_lamp").innerHTML = lamp;
+                //
+                //var led = JSON.parse(result).led;
+                //if (led === 0)
+                //    led = "RED";
+                //else if (led === 1)
+                //    led = "BLUE";
+                //else 
+                //    led = "GREEN";
+                //document.getElementById("curr_led").innerHTML = led; 
 
 
 
-            	var lamp = JSON.parse(result).lamp;
-            	if (lamp === 1)
-            		lamp = "ON";
-            	else
-            		lamp = "OFF";
-				document.getElementById("curr_lamp").innerHTML = lamp;
+            })
 
-				var led = JSON.parse(result).led;
-				if (led === 0)
-					led = "RED";
-				else if (led === 1)
-					led = "BLUE";
-				else 
-					led = "GREEN";
-            	document.getElementById("curr_led").innerHTML = led; 
-
-
-
-        	})
-
-        	// LAMP: https://brh0jzg8hf.execute-api.us-east-1.amazonaws.com/dev
-        	// LED: https://y2ig9vbgr4.execute-api.us-east-1.amazonaws.com/dev
+            // LAMP: https://brh0jzg8hf.execute-api.us-east-1.amazonaws.com/dev
+            // LED: https://y2ig9vbgr4.execute-api.us-east-1.amazonaws.com/dev
 
             .catch(error => console.log('error', error));            
         }
@@ -109,7 +315,9 @@
             // add content type header to object
             myHeaders.append("Content-Type", "application/json");
             // using built in JSON utility package turn object to string and store in a variable
-            var raw = JSON.stringify({"lamp":code});
+            var dev = document.getElementById("devlamp").value;
+            //console.log(dev)
+            var raw = JSON.stringify({"id":dev,"lamp":code});
             // create a JSON object with parameters for API call and store in a variable
             var requestOptions = {
                 method: 'POST',
@@ -125,10 +333,10 @@
 
             var lamp = "";
             if (code === 0)
-            	lamp = "OFF";
+                lamp = "OFF";
             else 
-            	lamp = "ON"
-			document.getElementById("curr_lamp").innerHTML = lamp;
+                lamp = "ON"
+            //document.getElementById("curr_lamp").innerHTML = lamp;
 
         } 
 
@@ -139,7 +347,9 @@
             // add content type header to object
             myHeaders.append("Content-Type", "application/json");
             // using built in JSON utility package turn object to string and store in a variable
-            var raw = JSON.stringify({"led":code});
+            var dev = document.getElementById("devlamp").value;
+            
+            var raw = JSON.stringify({"id":dev,"led":code});
             // create a JSON object with parameters for API call and store in a variable
             var requestOptions = {
                 method: 'POST',
@@ -154,50 +364,15 @@
             .catch(error => console.log('error', error));
 
             var led = "";
-			if (code === 0)
-				led = "RED";
-			else if (code === 1)
-				led = "BLUE";
-			else 
-				led = "GREEN";    
-            document.getElementById("curr_led").innerHTML = led; 
+            if (code === 0)
+                led = "RED";
+            else if (code === 1)
+                led = "BLUE";
+            else 
+                led = "GREEN";    
+            //document.getElementById("curr_led").innerHTML = led; 
         
         }                 
     </script>
-</head>
-<body onload="callAPI()">
-    <!--<form>
-        <label>First Name :</label>
-        <input type="text" id="fName">
-        <label>Last Name :</label>
-        <input type="text" id="lName">
-        < !-- set button onClick method to call function we defined passing input values as parameters -- ">
-        <button type="button" onclick="callAPI(document.getElementById('fName').value,document.getElementById('lName').value)">Call API</button>
-    </form> -->
-
- 	<h1> IoT 2021 Dashboard </h1>
-
- 	<h2>Sensors' Readings</h2>
-    <p>Latest sensor values:</p>  <p>Lux: <span></span></span><span id="llux"></span></p> <p>Temp: <span><span id="ltemp"></span></p>
-    <hr>
-    <p>Max, min, avg in the last hour:</p> <p>Lux: <span><span id="maxlux"></span> <span id="minlux"></span> <span id="avglux"></span></p>
-    <p>Temp:<span> <span id="maxtemp"></span> <span id="mintemp"></span> <span id="avgtemp"></span></p>
-    <hr>
-    <p>Last hour readings (sorted from most recent to least recent):</p>
-   
-    <p>Lux:<span><span></span><span id="alllux"></span></p> 
-    <p>Temp:<span><span></span><span id="alltemp"></span></p> 
-    <hr>
-
- 	<h2>Actuators' Triggers</h2>
- 	<p>Lamp (status: <span id="curr_lamp"></span>)</p>
- 	<p><button type="button" onclick="triggerLamp(1)">ON</button>  <button type="button" onclick="triggerLamp(0)">OFF</button>  </p>
-  	<p>LED (status: <span id="curr_led"></span>)</p>
- 	<p><button type="button" onclick="triggerLed(0)">R</button>  <button type="button" onclick="triggerLed(2)">G</button> 
- 		<button type="button" onclick="triggerLed(1)">B</button> </p>
-
- 	<i>Note1: If some values are "undefined", it means that all the readings in the database are older than 1 hour</i>
- 	<p></p>
- 	<i>Note2: Sorry for the way this dashboard looks, but it is my first time coding a website :).</i>
 </body>
 </html>
