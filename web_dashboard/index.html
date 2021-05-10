@@ -74,7 +74,7 @@ table, th, td {
 </head>
 
 <body onload="callAPI()">
-
+<!--
     <h1> DEBUG </h1>
     
 
@@ -88,7 +88,7 @@ table, th, td {
         <span id="dbg"></span><span id="dbg1"></span><span id="dbg2"></span>
         </div>
     </p>
-
+-->
  	<h1> IoT 2021 Dashboard </h1>
 
  	<h2>Sensors' Readings</h2>
@@ -185,7 +185,7 @@ table, th, td {
             .then(response => response.text())
             
             .then(function (result) {
-                document.getElementById("dbg").innerHTML = result;
+                //document.getElementById("dbg").innerHTML = result;
                 //console.log(result);
 
                 obj = JSON.parse(result);
@@ -348,7 +348,7 @@ table, th, td {
             myHeaders.append("Content-Type", "application/json");
             // using built in JSON utility package turn object to string and store in a variable
             var dev = document.getElementById("devlamp").value;
-            
+
             var raw = JSON.stringify({"id":dev,"led":code});
             // create a JSON object with parameters for API call and store in a variable
             var requestOptions = {
