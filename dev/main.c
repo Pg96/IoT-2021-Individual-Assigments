@@ -64,7 +64,7 @@
 #define NUMOFSUBS (16U)
 #define TOPIC_MAXLEN (64U)
 
-#define MQTT_TOKENS 6 /* The number of tokens (key-value) that will be received by the IoT Core */
+#define MQTT_TOKENS 8 /* The number of tokens (key-value) that will be received by the IoT Core */
 
 /* [Sensors] Stacks for multi-threading & tids placeholders*/
 char stack_lux[THREAD_STACKSIZE_MAIN];
@@ -135,7 +135,7 @@ int parse_command(char *command) {
     int activations = 0;
     int acts = 0;
 
-    // JSON STRUCT: {"acts":"1|2"", [lux":"0|1"], ["led":"0|1|2"]} ('[]' mean optional)
+    // JSON STRUCT: {"id":"<k", "acts":"1|2"", [lux":"0|1"], ["led":"0|1|2"]} ('[]' mean optional)
     for (int i = 1; i < MQTT_TOKENS; i += 2) {
         jsmntok_t key = tokens[i];
         unsigned int length = key.end - key.start;
@@ -144,6 +144,15 @@ int parse_command(char *command) {
         keyString[length] = '\0';
         //printf("Key: %s\n", keyString);
 
+        if (strcmp(keyString, "id") == 0) {
+            int val = parse_val(tokens[i + 1], command);
+
+            if (val != dev_id) {
+                printf("This message is not meant for me: %d", val);
+                return 0;
+            }
+        }
+        
         if (strcmp(keyString, "acts") == 0) {
             int val = parse_val(tokens[i + 1], command);
 

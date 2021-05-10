@@ -20,6 +20,9 @@ def lambda_handler(event, context):
         SUMMER_START_MONTH = 5
         SUMMER_END_MONTH = 8
         
+        id = event['id'][-1]
+        #print(id)
+        
         hour_now = int(datetime.now(timezone.utc).time().hour)
         #print(hour_now)
         hour_now += UTC_SKEW
@@ -52,11 +55,13 @@ def lambda_handler(event, context):
         elif ((currentmonth >= WINTER_START_MONTH and currentmonth <= WINTER_END_MONTH) and int(event['temp']) > TEMPHIGH_THRESHOLD):
                 led_code = 0 # Red
 
+#topic='awsiot_to_localgateway',
+
         # Change topic, qos and payload
         response = client.publish(
                 topic='awsiot_to_localgateway',
                 qos=0,
-                payload=json.dumps({"acts":"2", "lux":str(enable_lux), "led":str(led_code)})
+                payload=json.dumps({"id":str(id), "acts":"2", "lux":str(enable_lux), "led":str(led_code)})
             )
 
         return response

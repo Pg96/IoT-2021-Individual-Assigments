@@ -5,13 +5,14 @@ def lambda_handler(event, context):
         ''' Toggles the lamp '''
         client = boto3.client('iot-data', region_name='us-east-1')
         
+        dev = event['id'][-1]
         code = event['lamp']
         
         # Change topic, qos and payload
         response = client.publish(
                 topic='awsiot_to_localgateway',
                 qos=0,
-                payload=json.dumps({"acts":"1", "lux":str(code)})
+                payload=json.dumps({"id":dev,"acts":"1", "lux":str(code)})
             )
 
         return {
