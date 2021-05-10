@@ -39,7 +39,7 @@
 
 /* MQTT SECTION */
 #ifndef EMCUTE_ID
-#define EMCUTE_ID ("power_saver_0")
+#define EMCUTE_ID ("power_saver0")
 #endif
 
 #define _IPV6_DEFAULT_PREFIX_LEN (64U)
@@ -47,7 +47,7 @@
 #define NUMOFSUBS (16U)
 #define TOPIC_MAXLEN (64U)
 
-#define MQTT_TOKENS 6 /* The number of tokens (key-value) that will be received by the IoT Core */
+#define MQTT_TOKENS 8 /* The number of tokens (key-value) that will be received by the IoT Core */
 
 
 #define MAIN_QUEUE_SIZE     (8)
@@ -93,7 +93,7 @@ int parse_val(jsmntok_t key, char *command) {
 
 int toggle_rgbled(int code);
 
-
+int dev_id = -1;
 /* Parse the reply from the IoT Core*/
 int parse_command(char *command) {
     jsmn_parser parser;
@@ -124,6 +124,18 @@ int parse_command(char *command) {
         memcpy(keyString, &command[key.start], length);
         keyString[length] = '\0';
         //printf("Key: %s\n", keyString);
+
+
+        if (strcmp(keyString, "id") == 0) {
+            int val = parse_val(tokens[i + 1], command);
+
+            if (val != dev_id) {
+                printf("This message is not meant for me: %d", val);
+                return 7;
+            }
+
+            activations = val;
+        }
 
         if (strcmp(keyString, "acts") == 0) {
             int val = parse_val(tokens[i + 1], command);
@@ -226,6 +238,12 @@ static int pub(char *topic, const char *data, int qos) {
 int setup_mqtt(void) {
     /* initialize our subscription buffers */
     memset(subscriptions, 0, (NUMOFSUBS * sizeof(emcute_sub_t)));
+
+    xtimer_sleep(10);
+
+    dev_id = EMCUTE_ID[strlen(EMCUTE_ID)-1] - '0';
+    printf("Dev id: %d\n", dev_id);
+
 
     /* start the emcute thread */
     thread_create(stack_emcute, sizeof(stack_emcute), EMCUTE_PRIO, 0, emcute_thread, NULL, "emcute");
