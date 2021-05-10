@@ -131,10 +131,8 @@ int parse_command(char *command) {
 
             if (val != dev_id) {
                 printf("This message is not meant for me: %d", val);
-                return 7;
+                return 0;
             }
-
-            activations = val;
         }
 
         if (strcmp(keyString, "acts") == 0) {
@@ -247,11 +245,8 @@ int setup_mqtt(void) {
 
     /* start the emcute thread */
     thread_create(stack_emcute, sizeof(stack_emcute), EMCUTE_PRIO, 0, emcute_thread, NULL, "emcute");
-    //Adding address to network interface
-    //netif_add("4", "2001:0db8:0:f101::2");
-    //netif_add("4", NUCLEO_ADDR);
-    // connect to MQTT-SN broker
 
+    // connect to MQTT-SN broker
     printf("Connecting to MQTT-SN broker %s port %d.\n", SERVER_ADDR, SERVER_PORT);
 
     sock_udp_ep_t gw = {
