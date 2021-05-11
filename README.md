@@ -12,7 +12,7 @@ This repository is organized on multiple branches in order to separately handle 
 ### The _assignment3_ branch  
 * The _assignment3_ branch - WIP
 ### The _main_ branch  
-* The _main_ branch Is not directly related to the 3 assignments, as it is designed to keep compatibility of the device developed for the first assignment with the updated scripts and codes from AWS developed and modified to complete the other 2 assignments.
+* The _main_ branch Is not directly related to the 3 assignments, as it is designed to keep compatibility of the device developed for the first assignment with the updated scripts and codes from AWS developed and modified to complete the other 2 assignments. It is mainly used to test & debug the interaction with the AWS facilities without employing the nodes from FIT IoT-Lab, which are generally slow to deploy and not so easy to interact with.
 
 
 Each branch contains a custom _README.md_ file that addresses the questions and the requests issued by each specific assignment.
