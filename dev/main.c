@@ -116,7 +116,7 @@ int parse_command(char *command) {
     int activations = 0;
     int acts = 0;
 
-    // JSON STRUCT: {"acts":"1|2"", [lux":"0|1"], ["led":"0|1|2"]} ('[]' mean optional)
+    // JSON STRUCT: {"id":"<k>", acts":"1|2"", [lux":"0|1"], ["led":"0|1|2"]} ('[]' mean optional)
     for (int i = 1; i < MQTT_TOKENS; i += 2) {
         jsmntok_t key = tokens[i];
         unsigned int length = key.end - key.start;
@@ -438,7 +438,7 @@ void *main_loop(void *arg) {
         
         char core_str[40];
         sprintf(core_str, "{\"id\":\"%s\",\"lux\":\"%lu\",\"temp\":\"%lu\",\"lamp\":\"%d\",\"led\":\"%d\"}", EMCUTE_ID, lux, temp, curr_lux, curr_led);
-        pub(MQTT_TOPIC, core_str, 0);
+        pub(MQTT_TOPIC, core_str, 1);
 
         xtimer_periodic_wakeup(&last, DELAY);
     }
