@@ -4,74 +4,32 @@ Individual assignments for the IoT 2021 Course @ Sapienza University of Rome
 Web dashboard: https://dev867.dyaycgfnuds5z.amplifyapp.com/
 
 ## 1. Questions
-### 1.1. What is the problem and why do you need IoT?
-The aim of the application developed for this individual assignment is to optimize the power consumption in working places. This is achieved by sensing the environment to detect potential power wastesfulness, in terms of artificial lights and heating/cooling system, in the rooms inside a building.  
+### 1.1. How is the deployment of multiple sensors going to affect the IoT platform?
+For this kind of application, it is enough to deploy 1 single device per room, as the light intensity and temperature measures will hardly differ in the case multiple devices are placed in the same ambient.  
+The benefit of deploying multiple sensors in this case may help in terms of the analysis of the data sensed in multiple rooms to adjust the thresholds that lead the cloud system to trigger the actuators and possibly find common ones for all the rooms on the same floor inside a building.
 
-In order to achieve this, the two following sensors are employed: 
-- a **photocell**.
-- a **DHT11** humidity & temperature sensor. 
+The main limitation of a multi-hop wireless network in this case is that it will take a while to send the data to the cloud and receive a response, which may also get lost while travelling, thus leading to power wastes until the next iteration of the sensing. 
 
-The former is supposed to be connected to the room's light system **through a relay**, and *turn the lights  off* in the following cases:
-- The lights are on and the *ambient light intensity* in the room *exceeds* a given *threshold*.
-- The lights are on *outside the activity hours*. 
+### What are the connected components, the protocols to connect them and the overall IoT architecture?
+* **Network diagram**
+![alt text](images/net_diagram2.png "Network diagram")
 
-The latter is tasked with sensing the room's temperature and act by the means of a **RGB led** and an **active buzzer** under the following circumstances:
-- If the current season is *Summer* (therefore the a/c is supposed to be turned on) and the room's temperature falls below the given *lower threshold* (i.e. the a/c is pumping too much cool air), the **led** becomes **blue** and the **buzzer** is triggered to notify the status change.
-- If the current season is *Winter* (therefore the heating system is supposed to be turned on) and the room's temperature exceeds a given *upper threshold* (i.e. the system is pumping too much heat), the **led** becomes **red** and the **buzzer** is triggered to notify the status change.
-- In normal situations, the **led** becomes **green** and the **buzzer** is not triggered (as no negative status change happened).
+The system used for the experiment uses 2 kinds of nodes from the testbed:
+* 2+ [IoT-Lab M3](https://www.iot-lab.info/docs/boards/iot-lab-m3/) nodes, one of which acts as border router of the mesh while the remaining ones run the application developed for the 1st assignment and adequately modified to use the new communication technology.
+* 1 [IoT-LAB A8-M3](https://www.iot-lab.info/docs/boards/iot-lab-a8-m3/) node, which hosts both the MQTT/SN broker and the MQTT transparent bridge towards the AWS cloud infrastructure.
 
-Both sensors gather data **periodically** and send them to the **IoT Core**, which analyzes them, performs the aforementioned checks and then takes a decison in terms of which actuators to trigger and how.   
-Therefore, the *sensing* activity is **periodic**, but the *actuator's activation* is **event-driven**.
+* **Software components** -
+The cloud components remain unchanged with respect to the first assignment. Two additional software components have been employed for this assignment, both at the testbed level:
+    - The generic border router provided by [RIOT](https://github.com/RIOT-OS/RIOT/tree/master/examples/gnrc_border_router) in order to allow the m3 nodes to communicate with the clound infrastructure via MQTT.
+    - A *Jupyter* notebook is employed to interact with the real-world testbed in order to submit and run the experiments. 
+* **Architecture diagram**
+![alt text](images/diagram2.png "Architecture diagram")
+The _FIT/IoT-Lab Testbed_ node in the diagram includes the m3 nodes running the application, the m3 node running the generic border router firmware and the a8 node running the MQTT broker plus the transparent bridge.
 
-### 1.2. What data are collected and by which sensors?
-The **ambient light intensity** and the **ambient temperature** are measured in parallel (i.e. on two separate threads) at the same time every **30 minutes** to detect variations. 
-- The **photocell**  is a light-controlled variable resistor (i.e. an analog sensor). When the photocell is struck by light it drastically decreases its resistance until it reaches 500Ohm. In the absence of ambient light, the resistance of the photocell will become so high as 50KOhm which practically is non-conductive. 
-**RIOT OS**'s *ADC driver interface* is used to sample the light intensity, which is then mapped into the  **lux** **range 10..100**.  
-As **photocells** are very **inaccurate**, they are mainly used for light-sentsitive applications like "is it light or dark", which makes them good for this application.   
-To avoid potential reading errors that may be due to several kinds of factors (e.g. the sensor is temporarily [partially] covered, a sudden beam of light hits the sensor, etc.), the  light intensity is measured **once every 1 minute for 5 times**, and an **arithmetic average** is returned as the sensed value. 
-- The **DHT11** is a ultra low cost, basic and **slow** digital sensor for measuring ambient temperature and humidity*. The temperature is measured by a *thermistor* that changes its resistance with temperature, therefore the generated signal is an analog one. The analog signal is converted into a digital one thanks to a very basic chip contained in the sensor. This sensor is good for **0-50°C** **temperature readings** with a **±2°C** **accuracy**, which makes it suitable for the developed application.  
-Differently from the *light intensity*, the temperature is **measured only once** (within the 30-minute interval) as it is less subject to variations and because the sensor is definitely more accurate than the **photocell**. 
-
-The **collective intelligence** that is supposed to emerge from the readings regards the overall usage of artificial lights and heating/cooling systems, which will be used in order to detect power wastefulness.
-
-Sources: https://learn.adafruit.com/photocells, https://learn.adafruit.com/dht, https://github.com/ichatz/riotos-apps
-
-
-\* *the humidity specifications are skipped, as they are not used by this application.*
-### 1.3. What are the connected components, the protocols to connect them and the overall IoT architecture?
-* **Network diagram**  - The network diagram is very similar to the one in the picture below (taken from the [aws](https://aws.amazon.com/blogs/iot/how-to-bridge-mosquitto-mqtt-broker-to-aws-iot/) website).
-![alt text](images/net_diagram.png "Network diagram")
-The **local environment** contains the **nucleo board** with all the sensors and actuators described in the previous section, as well as a **MQTT-SN** broker (`mosquitto_rsmb`). A `mosquitto` service is used as a **MQTT-SN/MQTT transparent bridge** to communicate with the **AWS IoT Core** facility. 
-* **Software components** - The main software components are:
-    - [Device level] The **RIOT application**, which runs on the STM32 nucleo board.
-    - [Device level] The **MOSQUITTO_RSMB** MQTT/MQTTSN broker.
-    - [Device level] The **MOSQUITTO** MQTT broker, which acts as a transparent bridge from the local environment to the IoT Core & vice-versa.
- 
-    - [Cloud level] The **Thing** on IoT Core.
-    - [Cloud level] The **MQTT Broker** on IoT Core.
-    - [Cloud level] The **Rule** created on IoT Core which listens for incoming data from the board and on the one hand triggers a lambda, and on the other hand stores the data into a DB table.
-    - [Cloud level] The AWS **Lambda** to that performs the checks on the data received from the nucleo board and triggers the actuators.
-    - [Cloud level] The **DynamoDB** table used to store the readings from the sensors.
-    - [Cloud level] The **Web dashboard** hosted on AWS Amplify, which is used to display the data received from the board.
-    - [Cloud level] Some **REST APIs** defined on the AWS API gateway, which is needed to call some additional **lambdas** to access the DB and send commands to the actuators on the board.
-
-* **High-level architecture diagram**
-![alt text](images/diagram.png "Architecture diagram")
-
-1. The Local environment communicates with the IoT Core to send the readings from the sensors and to receive the commands to toggle the actuators.  
-2. The IoT Core on the one hand stores the received data in a DynamoDB table and on the other hand calls a lambda to analyze the sensors' readings in order to trigger the activation of the actuators when necessary. 
-3. The web dashboard (on AWS Amplify) retrieves the sensors' readings and the activators' status using an API Gateway, which in turn calls a lambda that reads the data stored inside the Dynamo DB table.
-4. The web dashboard also allows to control the 2 actuators by the means of 2 separate API Gateways which in turn call 2 different lambdas that send the trigger command to the Local environment via the IoT Core.
 
 ## 2. Hands-on Walkthrough
-### Local Setup
-1) Build the circuit as in the following picture:
-![alt text](images/circuit/nucleo.jpg "Circuit")
-3) Make sure the `mosquitto` service is correctly running and the bridge to the IoT core is correctly configured (see `./mqtt/bridge.conf`).
-2) Run the `mqtt_rsmb_run.sh` script (after setting the `MOSQUITTOrsmb_DIR` variable)  to start the MQTT-rsmb broker.
-3) Run the `netsetup.sh` script (after setting the `RIOT_DIR` variable) as `superuser (sudo)`.
-4) Go to the `./dev/` directory and use the `make flash term` command.
-Now the board will start retrieving data from the sensors and sending them to the IoT core to be checked and, if it is the case, receive the command(s) to toggle the actuators.
+### Iot-Lab Setup
+In order to set up the FIT/IoT-Lab enviroment, it is enough to follow the Jupyter notebook provided in the _iot-lab_ folder, which explains every step to perform in order to reproduce the experiment, flash the firmwares and run the MQTT/SN broker plus the transparent bridge. 
 ### Remote setup
 0) Create an application on *AWS IoT Core* & download the certificates and private keys from the IoT core to be used by the `mosquitto` instance on your local machine.
 1) Set up the *IoT core* rule as in `./iot_core/rules.sql`. Two actions should be linked to the rule: 
@@ -84,4 +42,6 @@ Now the board will start retrieving data from the sensors and sending them to th
 
 
 ## Extra: Web Dashboard Example
-![alt text](images/dashboard.png "Dashboard")
+![alt text](images/1v2.png "Dashboard")
+![alt text](images/2v2.png "Dashboard")
+
