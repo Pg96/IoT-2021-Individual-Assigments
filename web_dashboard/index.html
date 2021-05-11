@@ -43,9 +43,6 @@
             var myHeaders = new Headers();
             // add content type header to object
             myHeaders.append("Content-Type", "application/json");
-            // using built in JSON utility package turn object to string and store in a variable
-            // var raw = JSON.stringify({"firstName":firstName,"lastName":lastName});
-            // create a JSON object with parameters for API call and store in a variable
             var requestOptions = {
                 method: 'POST',
                 headers: myHeaders,
@@ -55,9 +52,6 @@
             // make API call with parameters and use promises to get response
             fetch("https://itixl6i4qe.execute-api.us-east-1.amazonaws.com/dev", requestOptions)
             .then(response => response.text())
-            //.then(result => alert(JSON.parse(result).body))
-            //{"statusCode": 200, "latest_lux": 22, "latest_temp": 24, "lux_max": 22, "lux_min": 22, "lux_avg": 22.0, "temp_max": 24, "temp_min": 24, "temp_avg": 24.0}
-            //.then(result =>  document.getElementById("llux").innerHTML = JSON.parse(result).latest_lux)
             
             .then(function (result) {
             	document.getElementById("llux").innerHTML = JSON.parse(result).latest_lux;
@@ -166,15 +160,6 @@
     </script>
 </head>
 <body onload="callAPI()">
-    <!--<form>
-        <label>First Name :</label>
-        <input type="text" id="fName">
-        <label>Last Name :</label>
-        <input type="text" id="lName">
-        < !-- set button onClick method to call function we defined passing input values as parameters -- ">
-        <button type="button" onclick="callAPI(document.getElementById('fName').value,document.getElementById('lName').value)">Call API</button>
-    </form> -->
-
  	<h1> IoT 2021 Dashboard </h1>
 
  	<h2>Sensors' Readings</h2>
