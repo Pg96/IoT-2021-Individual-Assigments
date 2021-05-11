@@ -438,7 +438,7 @@ void *main_loop(void *arg) {
         
         char core_str[40];
         sprintf(core_str, "{\"id\":\"%s\",\"lux\":\"%lu\",\"temp\":\"%lu\",\"lamp\":\"%d\",\"led\":\"%d\"}", EMCUTE_ID, lux, temp, curr_lux, curr_led);
-        pub(MQTT_TOPIC, core_str, 1);
+        pub(MQTT_TOPIC, core_str, 0);
 
         xtimer_periodic_wakeup(&last, DELAY);
     }
