@@ -10,7 +10,7 @@ The benefit of deploying multiple sensors in this case may help in terms of the 
 
 The main limitation of a multi-hop wireless network in this case is that it will take a while to send the data to the cloud and receive a response, which may also get lost while travelling, thus leading to power wastes until the next iteration of the sensing. 
 
-### What are the connected components, the protocols to connect them and the overall IoT architecture?
+### 1.2. What are the connected components, the protocols to connect them and the overall IoT architecture?
 * **Network diagram**
 ![alt text](images/net_diagram2.png "Network diagram")
 
@@ -26,6 +26,7 @@ The cloud components remain unchanged with respect to the first assignment, exce
 ![alt text](images/diagram2.png "Architecture diagram")
 The _FIT/IoT-Lab Testbed_ node in the diagram includes the m3 nodes running the application, the m3 node running the generic border router firmware and the a8 node running the MQTT broker plus the transparent bridge.
 
+### 1.3. How do you measure the performance of the system?
 
 ## 2. Hands-on Walkthrough
 ### IoT-Lab Setup
