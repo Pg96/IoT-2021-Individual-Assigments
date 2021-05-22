@@ -3,6 +3,7 @@
 bin/
 .vscode/
 oldmain.c 
+old 
 
 # Prerequisites
 *.d
