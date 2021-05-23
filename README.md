@@ -129,6 +129,19 @@ Node #3 (m3_12):
 ![alt text](images/performance/tst3/m12/rssi.png)
 
 
+### **Conclusions**
+#### **Wireless performance**
+As expected from and stated in the [iot-lab docs](https://www.iot-lab.info/docs/tools/radio-monitoring/) the measured RSSI for all the node in all the experiments is always near -91dBm, meaning there was not too much noise nor interference while the tests were being performed.  
+
+Nevertheless, by analyzing the nodes from the inside (via *nc*) and the logs from the **MQTT** broker on the A8 node, when the topology becomes more sparse (test 2 and test 3), sometimes the message from the devices did not manage to correctly arrive to the broker and thus were not published and bridged to AWS IoT.
+
+#### **Power consumption**
+The power, current and voltage consumptions are equivalent among the routers belonging to the different tests, which is expected as the firmware is the same for all of them.
+
+What stated above is generally true also for the devices, where the first major spikes most likely correspond to the flashing of the firmware, while the other minor spikes (generally 5, which is expected as the devices are supposed to sample every 3 minutes) probably correspond to the devices waking up for the sensing phase.
+
+The overall consumption performance of devices running the *power saver* firmware could be significantly increased by introducing deep sleep for the devices and waking them only when they need to sense the ambient. This was not done in this case because it would have prevented the leds from staying on all the time.
+
 ## 2. Hands-on Walkthrough
 ### IoT-Lab Setup
 In order to set up the FIT/IoT-Lab enviroment, it is enough to follow the Jupyter notebook provided in the _iot-lab_ folder, which explains every step to perform in order to reproduce the experiment, flash the firmwares and run the MQTT/SN broker plus the transparent bridge. 
