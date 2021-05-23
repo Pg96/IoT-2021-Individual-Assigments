@@ -27,6 +27,107 @@ The cloud components remain unchanged with respect to the first assignment, exce
 The _FIT/IoT-Lab Testbed_ node in the diagram includes the m3 nodes running the application, the m3 node running the generic border router firmware and the a8 node running the MQTT broker plus the transparent bridge.
 
 ### 1.3. How do you measure the performance of the system?
+The performance of the system was measured using the consumption and radio monitoring tools offered by the FIT/IoT-Lab facility.
+
+Three different tests were performed.
+All tests were run using channel 22. Concerning the topologies' pictures, the blue dots represent the used nodes.  
+In order to perform the tests in a limited time window (20-25 minutes), the devices' sleep time between sensing phases was reduced to 3 minutes.  
+Additionally, to prevent multiple devices to send data at the same time, the firmware was flashed with a small delay for each node.
+
+#### **1) Test 1:**
+Duration: 20 minutes  
+Nodes: 3 (1 router (red circle) + 2 devices)  
+Topology: line (border router in the middle).
+
+![alt text](images/performance/tst1/tst1.png "test1 topology")
+
+**Consumptions**:  
+Router (m3_8):
+
+![alt text](images/performance/tst1/m8/power.png)
+![alt text](images/performance/tst1/m8/current.png)
+![alt text](images/performance/tst1/m8/voltage.png)
+![alt text](images/performance/tst1/m8/rssi.png)
+
+Node #1 (m3_7):
+
+![alt text](images/performance/tst1/m7/power.png)
+![alt text](images/performance/tst1/m7/current.png)
+![alt text](images/performance/tst1/m7/voltage.png)
+![alt text](images/performance/tst1/m7/rssi.png)
+
+Node #2 (m3_9):  
+
+![alt text](images/performance/tst1/m9/power.png)
+![alt text](images/performance/tst1/m9/current.png)
+![alt text](images/performance/tst1/m9/voltage.png)
+![alt text](images/performance/tst1/m9/rssi.png)
+
+
+#### **2) Test 2:**
+Duration: 25 minutes  
+Nodes: 4 (1 router (red circle) + 3 devices)  
+Topology: diamond.
+
+![alt text](images/performance/tst2/tst2.png "test2 topology")
+
+**Consumptions**:  
+Router (m3_8):
+![alt text](images/performance/tst2/m8/power.png)
+![alt text](images/performance/tst2/m8/current.png)
+![alt text](images/performance/tst2/m8/voltage.png)
+![alt text](images/performance/tst2/m8/rssi.png)
+
+Node #1 (m3_2):
+![alt text](images/performance/tst2/m2/power.png)
+![alt text](images/performance/tst2/m2/current.png)
+![alt text](images/performance/tst2/m2/voltage.png)
+![alt text](images/performance/tst2/m2/rssi.png)
+
+Node #2 (m3_4):  
+![alt text](images/performance/tst2/m4/power.png)
+![alt text](images/performance/tst2/m4/current.png)
+![alt text](images/performance/tst2/m4/voltage.png)
+![alt text](images/performance/tst2/m4/rssi.png)
+
+Node #3 (m3_6):  
+![alt text](images/performance/tst2/m6/power.png)
+![alt text](images/performance/tst2/m6/current.png)
+![alt text](images/performance/tst2/m6/voltage.png)
+![alt text](images/performance/tst2/m6/rssi.png)
+
+#### **3) Test 3:**
+Duration: 25 minutes  
+Nodes: 4 (1 router (red circle) + 3 devices)  
+Topology: larger diameter.
+
+![alt text](images/performance/tst3/tst3.png "test3 topology")
+
+**Consumptions**:  
+Router (m3_6):
+![alt text](images/performance/tst3/m6/power.png)
+![alt text](images/performance/tst3/m6/current.png)
+![alt text](images/performance/tst3/m6/voltage.png)
+![alt text](images/performance/tst3/m6/rssi.png)
+
+Node #1 (m3_1):
+![alt text](images/performance/tst3/m1/power.png)
+![alt text](images/performance/tst3/m1/current.png)
+![alt text](images/performance/tst3/m1/voltage.png)
+![alt text](images/performance/tst3/m1/rssi.png)
+
+Node #2 (m3_7):  
+![alt text](images/performance/tst3/m7/power.png)
+![alt text](images/performance/tst3/m7/current.png)
+![alt text](images/performance/tst3/m7/voltage.png)
+![alt text](images/performance/tst3/m7/rssi.png)
+
+Node #3 (m3_12):  
+![alt text](images/performance/tst3/m12/power.png)
+![alt text](images/performance/tst3/m12/current.png)
+![alt text](images/performance/tst3/m12/voltage.png)
+![alt text](images/performance/tst3/m12/rssi.png)
+
 
 ## 2. Hands-on Walkthrough
 ### IoT-Lab Setup

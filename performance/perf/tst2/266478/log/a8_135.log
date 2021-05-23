@@ -1,0 +1,24 @@
+2021-05-22 18:11:18,649 :: INFO :: Start experiment: priamo-266478
+2021-05-22 18:11:18,662 :: INFO :: Control node : Starting of control node serial interface
+2021-05-22 18:11:18,674 :: INFO :: Control node : reset
+2021-05-22 18:11:18,685 :: INFO :: Reset Control Node
+2021-05-22 18:11:21,739 :: INFO :: Control node : start power of open node
+2021-05-22 18:11:21,796 :: INFO :: Node A8 : setup of a8 node
+2021-05-22 18:11:22,722 :: INFO :: Control node : Start experiment
+2021-05-22 18:11:22,755 :: INFO :: Control Node set time delay: 2900 us
+2021-05-22 18:11:22,785 :: INFO :: Control node : profile configuration
+2021-05-22 18:11:22,789 :: INFO :: Configure profile on Control Node
+2021-05-22 18:11:22,834 :: INFO :: Start experiment succeeded
+2021-05-22 18:11:58,601 :: INFO :: Boot A8 succeeded in time: 34s
+2021-05-22 18:36:31,940 :: INFO :: Gateway Manager : Stop experiment
+2021-05-22 18:36:31,962 :: INFO :: Stop experiment
+2021-05-22 18:36:31,978 :: INFO :: Control node : stop of the experiment
+2021-05-22 18:36:31,992 :: INFO :: Control node : profile configuration
+2021-05-22 18:36:32,011 :: INFO :: Configure profile on Control Node
+2021-05-22 18:36:32,106 :: INFO :: Control node : start power of open node
+2021-05-22 18:36:32,128 :: INFO :: Node A8 : teardown of a8 node
+2021-05-22 18:36:33,747 :: INFO :: Control node : Stop control node serial interface
+2021-05-22 18:36:33,762 :: INFO :: Control node : stop power of open node
+2021-05-22 18:36:33,815 :: INFO :: Control node : reset
+2021-05-22 18:36:33,821 :: INFO :: Reset Control Node
+2021-05-22 18:36:36,766 :: INFO :: Stop experiment succeeded
