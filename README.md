@@ -63,7 +63,7 @@ The **local environment** contains the **nucleo board** with all the sensors and
 3. The web dashboard (on AWS Amplify) retrieves the sensors' readings and the activators' status using an API Gateway, which in turn calls a lambda that reads the data stored inside the Dynamo DB table.
 4. The web dashboard also allows to control the 2 actuators by the means of 2 separate API Gateways which in turn call 2 different lambdas that send the trigger command to the Local environment via the IoT Core.
 
-**Important Note**: All the chosen thresholds mentioned above have been selected after performing a series of measurements with the sensors. They are supposed to be adapted (this can be easily done, as they are set in the cloud once for all the devices) depending on the ambient where the *power saver* devices are deployed.
+**Important Note**: All the chosen thresholds mentioned above have been selected after performing a series of measurements with the sensors in the same room. They are supposed to be adapted (this can be easily done, as they are set in the cloud once for all the devices) depending on the ambient (i.e. the building) where the *power saver* devices will be deployed.
 
 ## 2. Hands-on Walkthrough
 ### Local Setup
