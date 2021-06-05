@@ -26,8 +26,8 @@
 
 #define LIGHT_ITER 5 /* Light measurement - number of iterations */
 
-#define DELAY (180000LU * US_PER_MS) /* 1 minute - Delay between main_loop() iterations */
-//60000LU = 1 minute ; 300000LU = 5 minutes
+#define DELAY (15000LU * US_PER_MS) /* 1 minute - Delay between main_loop() iterations */
+//60000LU = 1 minute ; 180000LU = 5 minutes ;  300000LU = 5 minutes
 
 #define LIGHT_SLEEP_TIME 1 /* Determines the sleep time (60 seconds) between subsequent iterations in the measure_light() loop */
 
@@ -135,7 +135,7 @@ int parse_command(char *command) {
             }
         }
 
-        if (strcmp(keyString, "acts") == 0) {
+        else if (strcmp(keyString, "acts") == 0) {
             int val = parse_val(tokens[i + 1], command);
 
             if (val < 1 || val > 2) {
