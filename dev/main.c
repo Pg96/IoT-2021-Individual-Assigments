@@ -391,6 +391,10 @@ void *measure_temp(void *arg) {
 
 int started = -1;
 
+int temp_high_threshold = -1;
+int temp_low_threshold = -1;
+int lux_threshold = -1;
+
 void *main_loop(void *arg) {
     (void)arg;
     tmain = thread_getpid();
@@ -437,8 +441,12 @@ void *main_loop(void *arg) {
         //puts("msg2 received\n");
         
         char core_str[40];
-        sprintf(core_str, "{\"id\":\"%s\",\"lux\":\"%lu\",\"temp\":\"%lu\",\"lamp\":\"%d\",\"led\":\"%d\"}", EMCUTE_ID, lux, temp, curr_lux, curr_led);
-        pub(MQTT_TOPIC, core_str, 0);
+
+        // TODO: may need to split these 2 (due to limited data that can be sent)
+        if ((temp > temp_high_threshold || temp < temp_low_threshold) || lux >= lux_threshold) {
+            sprintf(core_str, "{\"id\":\"%s\",\"lux\":\"%lu\",\"temp\":\"%lu\",\"lamp\":\"%d\",\"led\":\"%d\"}", EMCUTE_ID, lux, temp, curr_lux, curr_led);
+            pub(MQTT_TOPIC, core_str, 0);
+        }
 
         xtimer_periodic_wakeup(&last, DELAY);
     }

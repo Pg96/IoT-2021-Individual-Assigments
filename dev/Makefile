@@ -1,8 +1,8 @@
 # name of your application
-APPLICATION = assignment2
+APPLICATION = assignment3
 
 # If no BOARD is found in the environment, use this default:
-BOARD ?= iotlab-m3
+BOARD ?= b-l072z-lrwan1
 
 # This has to be the absolute path to the RIOT base directory:
 RIOTBASE ?= /senslab/users/priamo/RIOT
@@ -18,37 +18,28 @@ QUIET ?= 1
 
 # Modules to include:
 USEMODULE += xtimer
-USEMODULE += lps331ap
-USEMODULE += isl29020
+USEMODULE += hts221
 
-# For the light sensor
-#USEMODULE += analog_util
-# Temp & Humidity 
-#USEMODULE += dht
-#USEMODULE += fmt
-# To enable-disable pins
-#USEMODULE += periph_gpio
-# USEMODULE += pm
+#
+# The application needs LoRaWAN related modules and variables:
+#
 
-# Include packages that pull up and auto-init the link layer.
-# NOTE: 6LoWPAN will be included if IEEE802.15.4 devices are present
-USEMODULE += gnrc_netdev_default
-USEMODULE += auto_init_gnrc_netif
-# Activate ICMPv6 error messages
-USEMODULE += gnrc_icmpv6_error
-# Specify the mandatory networking modules for IPv6 and UDP
-USEMODULE += gnrc_ipv6_router_default
-USEMODULE += gnrc_udp
-# Add a routing protocol
-USEMODULE += gnrc_rpl
-USEMODULE += auto_init_gnrc_rpl
-# This application dumps received packets to STDIO using the pktdump module
-USEMODULE += gnrc_pktdump
-# Additional networking mdules that can be dropped if not needed
-USEMODULE += gnrc_icmpv6_echo
+# The Semtech LoRa radio device (SX1276)
+USEMODULE += sx1276
+USEMODULE += semtech_loramac_rx
 
-USEMODULE += gnrc_ipv6_default
-USEMODULE += emcute
+# The Semtech Loramac package
+USEPKG += semtech-loramac
+
+# Default region is Europe and default band is 868MHz
+LORA_REGION ?= EU868
+
+TTN_DEV_ID ?= 01
+CFLAGS += -DTTN_DEV_ID='"$(TTN_DEV_ID)"'
+
+#USEMODULE += lps331ap
+#USEMODULE += isl29020
+
 SERVER_ADDR = 2001:660:3207:400::61
 SERVER_PORT = 1885
 
@@ -56,9 +47,9 @@ SERVER_PORT = 1885
 USEMODULE += shell
 USEMODULE += shell_commands
 USEMODULE += ps
-USEMODULE += netstats_l2
-USEMODULE += netstats_ipv6
-USEMODULE += netstats_rpl
+#USEMODULE += netstats_l2
+#USEMODULE += netstats_ipv6
+#USEMODULE += netstats_rpl
 MQTT_TOPIC = localgateway_to_awsiot
 MQTT_TOPIC_IN = awsiot_to_localgateway
 CFLAGS += -DSERVER_ADDR='"$(SERVER_ADDR)"'
@@ -70,20 +61,9 @@ ifneq (,$(EMCUTE_ID))
   CFLAGS += -DEMCUTE_ID=\"$(EMCUTE_ID)\"
 endif
 
-# Set a custom channel if needed
-include $(RIOTMAKE)/default-radio-settings.inc.mk
-
-#FEATURES_OPTIONAL += periph_rtc
-#FEATURES_OPTIONAL += periph_adc
-
 # if NUCLEO = 1 => an stm32 nucleo board is being used, else => an M3 node is being used
 NUCLEO = 0
 CFLAGS += -DNUCLEO=$(NUCLEO)
 
 #include $(CURDIR)/Makefile.net.conf
 include $(RIOTBASE)/Makefile.include
-
-
-
-# Set a custom channel if needed
-include $(RIOTMAKE)/default-radio-settings.inc.mk
