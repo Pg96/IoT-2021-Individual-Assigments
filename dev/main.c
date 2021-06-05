@@ -114,6 +114,7 @@ int parse_val(jsmntok_t key, char *command) {
     return val;
 }
 
+const int dev_id = 0;
 /* Parse the reply from the IoT Core*/
 int parse_command(char *command) {
     jsmn_parser parser;
@@ -143,17 +144,20 @@ int parse_command(char *command) {
         memcpy(keyString, &command[key.start], length);
         keyString[length] = '\0';
         //printf("Key: %s\n", keyString);
+        //printf("%d\n", strlen(keyString));
 
         if (strcmp(keyString, "id") == 0) {
             int val = parse_val(tokens[i + 1], command);
 
             if (val != dev_id) {
                 printf("This message is not meant for me: %d", val);
-                return 0;
+                //return 0;
+                break;
             }
+            printf("Message for me\n");
         }
         
-        if (strcmp(keyString, "acts") == 0) {
+        else if (strcmp(keyString, "acts") == 0) {
             int val = parse_val(tokens[i + 1], command);
 
             if (val < 1 || val > 2) {
@@ -171,11 +175,13 @@ int parse_command(char *command) {
                 return 4;
             }
 
+            //printf("Toggling lamp with val: %d\n", val);
             toggle_lamp(val);
+            //printf("Done\n");
 
             acts++;
             if (acts == activations) {
-                //puts("LuBreak");
+                puts("LuBreak");
                 break;
             }
         } else if (strcmp(keyString, "led") == 0) {
@@ -186,7 +192,9 @@ int parse_command(char *command) {
                 return 5;
             }
 
+            //printf("Toggling led with val: %d\n", val);
             toggle_rgbled(val);
+            //printf("DOne.");
 
             acts++;
             if (acts == activations) {
@@ -365,6 +373,9 @@ int init_actuators(void) {
         return 1;
     }
 
+    gpio_set(lamp_pin);
+
+
     /* Initialize buzzer pin */
     if (gpio_init(buzz_pin, GPIO_OUT)) {
         printf("An error occurred while trying to initialize GPIO_PIN(%d %d)\n", PORT_B, 5);
@@ -391,18 +402,23 @@ int init_actuators(void) {
     return 0;
 }
 
-int curr_lux = 0;
+int curr_lux = 1;
 /* Sensors & Actuators */
 int toggle_lamp(int code) {
     /* Avoid re-triggering the current action */
+    //printf("currlux: %d, val: %d\n", curr_lux, code);
     if (curr_lux == code)
         return 0;
 
-    if (code == LAMP_ON) 
+
+    else if (code == LAMP_ON) {
+        //puts("Setting lamp");
         gpio_set(lamp_pin);
-    else
+    }
+    else {
+        //puts("Clearing lamp");
         gpio_clear(lamp_pin);
-    
+    }
     curr_lux = code;
 
     return 0;
@@ -455,6 +471,7 @@ int toggle_buzzer(void) {
     // }
 
     // Turn on the buzzer
+    puts("Toggling buzzer");
     gpio_set(buzz_pin);
 
     xtimer_sleep(TEMP_SLEEP_TIME);
