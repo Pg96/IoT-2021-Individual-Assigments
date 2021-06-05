@@ -40,7 +40,7 @@
 // #define PM_MODE 0  /* Power  Management mode */
 // #define PM_DELAY 5 /* Power Management Wake-up delay */
 
-#define DELAY (60000LU * US_PER_MS) /* 1 minute - Delay between main_loop() iterations */
+#define DELAY (15000LU * US_PER_MS) /* 1 minute - Delay between main_loop() iterations */
 //60000LU = 1 minute ; 300000LU = 5 minutes
 
 #define TEMP_SLEEP_TIME 2  /* Determines the duration of the buzzer's sound */
@@ -181,7 +181,7 @@ int parse_command(char *command) {
 
             acts++;
             if (acts == activations) {
-                puts("LuBreak");
+                //puts("LuBreak");
                 break;
             }
         } else if (strcmp(keyString, "led") == 0) {
