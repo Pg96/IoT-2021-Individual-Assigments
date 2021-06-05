@@ -123,7 +123,7 @@ int parse_command(char *command) {
         char keyString[length + 1];
         memcpy(keyString, &command[key.start], length);
         keyString[length] = '\0';
-        printf("Key: %s\n", keyString);
+        //printf("Key: %s\n", keyString);
 
 
         if (strcmp(keyString, "id") == 0) {
@@ -133,6 +133,7 @@ int parse_command(char *command) {
                 printf("This message is not meant for me: %d", val);
                 return 0;
             }
+            puts("Message for me.");
         }
 
         else if (strcmp(keyString, "acts") == 0) {
