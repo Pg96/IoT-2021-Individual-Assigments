@@ -375,7 +375,7 @@ void *measure_temp(void *arg) {
     printf("Sending message '%s'\n", message);
     */
 
-    dint16_t dtemp = temperature / 100;
+    int16_t dtemp = temperature / 100;
     
 
     uint32_t utemp;
@@ -397,9 +397,9 @@ void *measure_temp(void *arg) {
 
 int started = -1;
 
-int temp_high_threshold = -1;
-int temp_low_threshold = -1;
-int lux_threshold = -1;
+uint32_t temp_high_threshold = -1;
+uint32_t temp_low_threshold = -1;
+uint32_t lux_threshold = -1;
 
 void *main_loop(void *arg) {
     (void)arg;
@@ -449,50 +449,15 @@ void *main_loop(void *arg) {
 
         // TODO: may need to split these 2 (due to limited data that can be sent)
         if ((temp > temp_high_threshold || temp < temp_low_threshold) || lux >= lux_threshold) {
-            sprintf(core_str, "{\"id\":\"%s\",\"lux\":\"%lu\",\"temp\":\"%lu\",\"lamp\":\"%d\",\"led\":\"%d\"}", EMCUTE_ID, lux, temp, curr_lux, curr_led);
-            pub(MQTT_TOPIC, core_str, 0);
+            sprintf(core_str, "{\"id\":\"%s\",\"lux\":\"%lu\",\"temp\":\"%lu\",\"lamp\":\"%d\",\"led\":\"%d\"}", TTN_DEV_ID, lux, temp, curr_lux, curr_led);
+            
+            //TODO: SEND MSG VIA LORA
+
+            printf("%s\n", core_str);
         }
 
         xtimer_periodic_wakeup(&last, DELAY);
     }
-}
-
-static void _lpsxxx_usage(char *cmd) {
-    printf("usage: %s <temperature|pressure>\n", cmd);
-}
-
-static int isl29020_handler(int argc, char *argv[]) {
-    (void)argc;
-    (void)argv;
-
-    //printf("Light value: %5i LUX\n", isl29020_read(&dev));
-
-    return 0;
-}
-
-static int lpsxxx_handler(int argc, char *argv[]) {
-    /**
-    if (argc < 2) {
-        _lpsxxx_usage(argv[0]);
-        return -1;
-    }
-
-    if (!strcmp(argv[1], "temperature")) {
-        int16_t temp = 0;
-        lpsxxx_read_temp(&lpsxxx, &temp);
-        printf("Temperature: %i.%u°C\n", (temp / 100), (temp % 100));
-    }
-    else if (!strcmp(argv[1], "pressure")) {
-        uint16_t pres = 0;
-        lpsxxx_read_pres(&lpsxxx, &pres);
-        printf("Pressure: %uhPa\n", pres);
-    }
-    else {
-        _lpsxxx_usage(argv[0]);
-        return -1;
-    }
-    */
-    return 0;
 }
 
 static int cmd_toggle_led(int argc, char *argv[]) {
@@ -561,17 +526,13 @@ static int cmd_status(int argc, char *argv[]) {
 static const shell_command_t shell_commands[] = {
     {"status", "get a status report", cmd_status},
     {"led", "toggle led", cmd_toggle_led},
-    {"isl", "read the isl29020 values", isl29020_handler},
-    {"lps", "read the lps331ap values", lpsxxx_handler},
     {"board", "Print the board name", _board_handler},
     {"cpu", "Print the cpu name", _cpu_handler},
     {NULL, NULL, NULL}};
 
 int main(void) {
-    puts("Setting lora");
+    puts("Initializing lora");
     lora_init();
-    thread_create(_recv_stack, sizeof(_recv_stack),
-               THREAD_PRIORITY_MAIN - 1, 0, _recv, NULL, "recv thread"); 
 
     printf("Initializing sensors\n");
     int sensors_status = init_sensors();
@@ -595,7 +556,14 @@ int main(void) {
 
     puts("Starting main_loop thread...");
     /* Perform sensor readings on a separate thread in order to host a shell on the main thread*/
-    thread_create(stack_loop, sizeof(stack_loop), EMCUTE_PRIO, 0, main_loop, NULL, "main_loop");
+    // TODO: THIS MAY NEED MODIFICATIONS
+    thread_create(stack_loop, sizeof(stack_loop), THREAD_PRIORITY_MAIN, 0, main_loop, NULL, "main_loop");
+
+        // TODO: THIS MAY NEED MODIFICATIONS
+
+    thread_create(_recv_stack, sizeof(_recv_stack),
+               THREAD_PRIORITY_MAIN - 1, 0, _recv, NULL, "recv thread"); 
+
     puts("Thread started successfully!");
 
     char line_buf[SHELL_DEFAULT_BUFSIZE];
