@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "net/loramac.h"     /* core loramac definitions */
 #include "semtech_loramac.h" /* package API */
