@@ -106,7 +106,7 @@ static void *_recv(void *arg) {
     return NULL;
 }
 
-void send(char[] message) {
+void send(char* message) {
     //printf("VALUE: %d\n", val);
     /**
     char message[50];
