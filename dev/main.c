@@ -1,26 +1,19 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-
+#include "hts221.h"
+#include "hts221_params.h"
 #include "jsmn.h"
 #include "msg.h"
+#include "periph/gpio.h"
+#include "shell.h"
 #include "thread.h"
-
-#include "net/emcute.h"
-#include "net/ipv6/addr.h"
-
 #include "timex.h"
 #include "xtimer.h"
-#include "shell.h"
-#include "lpsxxx.h"
-#include "lpsxxx_params.h"
-#include "isl29020.h"
-#include "isl29020_params.h"
-#include "periph/gpio.h"
 
-#define 	CONFIG_EMCUTE_DEFAULT_PORT   (1883U)
+#define CONFIG_EMCUTE_DEFAULT_PORT (1883U)
 
 #define JSMN_HEADER
 
@@ -35,31 +28,138 @@
 #define TEMP_TOO_HIGH 0
 #define TEMP_OK 2
 
-#define EMCUTE_PRIO (THREAD_PRIORITY_MAIN - 1)
-
-/* MQTT SECTION */
-#ifndef EMCUTE_ID
-#define EMCUTE_ID ("power_saver0")
-#endif
-
-#define _IPV6_DEFAULT_PREFIX_LEN (64U)
-
-#define NUMOFSUBS (16U)
-#define TOPIC_MAXLEN (64U)
-
 #define MQTT_TOKENS 8 /* The number of tokens (key-value) that will be received by the IoT Core */
 
+#define RECV_MSG_QUEUE (4U)
+static msg_t _recv_queue[RECV_MSG_QUEUE];
+static char _recv_stack[THREAD_STACKSIZE_DEFAULT];
 
-#define MAIN_QUEUE_SIZE     (8)
-static msg_t _main_msg_queue[MAIN_QUEUE_SIZE];
+static semtech_loramac_t loramac; /* The loramac stack descriptor */
 
-/* [Emcute - MQTT] Stack and  vars */
-static char stack_emcute[THREAD_STACKSIZE_DEFAULT];
-//static msg_t queue[8];
+static hts221_t hts221; /* The HTS221 device descriptor */
 
-static emcute_sub_t subscriptions[NUMOFSUBS];
-static char topics[NUMOFSUBS][TOPIC_MAXLEN];
+static const uint8_t deveui[LORAMAC_DEVEUI_LEN] = {0x98, 0x76, 0x54, 0x33, 0x22, 0x11, 0x98, 0x76};
+static const uint8_t appeui[LORAMAC_APPEUI_LEN] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+static const uint8_t appkey[LORAMAC_APPKEY_LEN] = {0x79, 0x9C, 0x10, 0x94, 0x37, 0xCC, 0xF6, 0xDF, 0x3E, 0x8D, 0xA5, 0x2A, 0xBF, 0x54, 0x5C, 0x78};
 
+static char encoding_table[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
+                                'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
+                                'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
+                                'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
+                                'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
+                                'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+                                'w', 'x', 'y', 'z', '0', '1', '2', '3',
+                                '4', '5', '6', '7', '8', '9', '+', '/'};
+static int mod_table[] = {0, 2, 1};
+
+char *base64_encode(const char *data,
+                    size_t input_length,
+                    size_t *output_length) {
+    *output_length = 4 * ((input_length + 2) / 3);
+
+    char *encoded_data = malloc(*output_length);
+    if (encoded_data == NULL) return NULL;
+
+    for (size_t i = 0, j = 0; i < input_length;) {
+        uint32_t octet_a = i < input_length ? (unsigned char)data[i++] : 0;
+        uint32_t octet_b = i < input_length ? (unsigned char)data[i++] : 0;
+        uint32_t octet_c = i < input_length ? (unsigned char)data[i++] : 0;
+
+        uint32_t triple = (octet_a << 0x10) + (octet_b << 0x08) + octet_c;
+
+        encoded_data[j++] = encoding_table[(triple >> 3 * 6) & 0x3F];
+        encoded_data[j++] = encoding_table[(triple >> 2 * 6) & 0x3F];
+        encoded_data[j++] = encoding_table[(triple >> 1 * 6) & 0x3F];
+        encoded_data[j++] = encoding_table[(triple >> 0 * 6) & 0x3F];
+    }
+
+    for (int i = 0; i < mod_table[input_length % 3]; i++)
+        encoded_data[*output_length - 1 - i] = '=';
+
+    return encoded_data;
+}
+
+static void *_recv(void *arg) {
+    msg_init_queue(_recv_queue, RECV_MSG_QUEUE);
+    (void)arg;
+    while (1) {
+        /* blocks until a message is received */
+        semtech_loramac_recv(&loramac);
+        loramac.rx_data.payload[loramac.rx_data.payload_len] = 0;
+        printf("Data received: %s, port: %d\n",
+               (char *)loramac.rx_data.payload, loramac.rx_data.port);
+
+        /*
+        char * msg = (char *)loramac.rx_data.payload;
+        size_t inl = strlen(msg);
+        printf("Trying to decode the message (len: %u )...\n", inl);
+        size_t outl;
+        //unsigned char* decoded =  base64_decode(msg, inl, &outl);
+        
+        printf("Result: ( %u )\n", outl);
+        */
+    }
+    return NULL;
+}
+
+void send(int val) {
+    printf("VALUE: %d\n", val);
+    char message[50];
+    sprintf(message, "{\"id\":\"%s\",\"filling\":\"%d\"}", TTN_DEV_ID, val);
+
+    printf("Sending message '%s'\n", message);
+
+    size_t inl = strlen(message);
+    size_t outl;
+    printf("Trying to encode the message (len: %zu )...\n", inl);
+    char *encoded = base64_encode(message, inl, &outl);
+    printf("Result: %s (%zu )\n", encoded, outl);
+    /* send the message here */
+    if (semtech_loramac_send(&loramac,
+                             (uint8_t *)message, strlen(message)) != SEMTECH_LORAMAC_TX_DONE) {
+        printf("Cannot send message '%s'\n", message);
+    } else {
+        printf("Message '%s' sent\n", message);
+    }
+}
+
+int lora_init(void) {
+    /* initialize the HTS221 sensor */
+    if (hts221_init(&hts221, &hts221_params[0]) != HTS221_OK) {
+        puts("Sensor initialization failed");
+        return 1;
+    }
+
+    if (hts221_power_on(&hts221) != HTS221_OK) {
+        puts("Sensor initialization power on failed");
+        return 1;
+    }
+
+    if (hts221_set_rate(&hts221, hts221.p.rate) != HTS221_OK) {
+        puts("Sensor continuous mode setup failed");
+        return 1;
+    }
+
+    /* initialize the loramac stack */
+    semtech_loramac_init(&loramac);
+
+    /* configure the device parameters */
+    semtech_loramac_set_deveui(&loramac, deveui);
+    semtech_loramac_set_appeui(&loramac, appeui);
+    semtech_loramac_set_appkey(&loramac, appkey);
+
+    /* change datarate to DR5 (SF7/BW125kHz) */
+    semtech_loramac_set_dr(&loramac, 5);
+
+    /* start the OTAA join procedure */
+    if (semtech_loramac_join(&loramac, LORAMAC_JOIN_OTAA) != SEMTECH_LORAMAC_JOIN_SUCCEEDED) {
+        puts("Join procedure failed");
+        return 1;
+    }
+    puts("Join procedure succeeded");
+
+    return 0;
+}
 
 /* [Sensors] Stacks for multi-threading & tids placeholders*/
 char stack_loop[THREAD_STACKSIZE_MAIN];
@@ -68,16 +168,6 @@ char stack_temp[THREAD_STACKSIZE_MAIN];
 
 /* Threads' IDs */
 kernel_pid_t tmain, t1, t2;
-
-/* Light and temperature sensors */
-static lpsxxx_t lpsxxx;
-isl29020_t dev;
-
-static void *emcute_thread(void *arg) {
-    (void)arg;
-    emcute_run(CONFIG_EMCUTE_DEFAULT_PORT, EMCUTE_ID);
-    return NULL; /* should never be reached */
-}
 
 int parse_val(jsmntok_t key, char *command) {
     unsigned int length = key.end - key.start;
@@ -112,7 +202,6 @@ int parse_command(char *command) {
         return 2;
     }
 
-
     int activations = 0;
     int acts = 0;
 
@@ -124,7 +213,6 @@ int parse_command(char *command) {
         memcpy(keyString, &command[key.start], length);
         keyString[length] = '\0';
         printf("Key: %s\n", keyString);
-
 
         if (strcmp(keyString, "id") == 0) {
             int val = parse_val(tokens[i + 1], command);
@@ -144,8 +232,7 @@ int parse_command(char *command) {
             }
 
             activations = val;
-        }
-        else if (strcmp(keyString, "lux") == 0) {
+        } else if (strcmp(keyString, "lux") == 0) {
             int val = parse_val(tokens[i + 1], command);
 
             if (val < 0 || val > 1) {
@@ -179,109 +266,6 @@ int parse_command(char *command) {
             printf("Key not recognized: %s\n", keyString);
         }
     }
- 
-    return 0;
-}
-
-static void on_pub(const emcute_topic_t *topic, void *data, size_t len) {
-    char *in = (char *)data;
-
-    char comm[len + 1];
-
-    printf("### got publication for topic '%s' [%i] ###\n",
-           topic->name, (int)topic->id);
-    for (size_t i = 0; i < len; i++) {
-        //printf("%c", in[i]);
-
-        comm[i] = in[i];
-    }
-    comm[len] = '\0';
-
-    printf("%s\n", comm);
-
-    parse_command(comm);
-    //puts("");
-}
-
-static int pub(char *topic, const char *data, int qos) {
-    emcute_topic_t t;
-    unsigned flags = EMCUTE_QOS_0;
-
-    switch (qos) {
-        case 1:
-            flags |= EMCUTE_QOS_1;
-            break;
-        case 2:
-            flags |= EMCUTE_QOS_2;
-            break;
-        default:
-            flags |= EMCUTE_QOS_0;
-            break;
-    }
-
-    t.name = MQTT_TOPIC;
-    if (emcute_reg(&t) != EMCUTE_OK) {
-        puts("[MQTT] PUB ERROR: Unable to obtain Topic ID");
-        return 1;
-    }
-    if (emcute_pub(&t, data, strlen(data), flags) != EMCUTE_OK) {
-        printf("[MQTT] PUB ERROR: unable to publish data to topic '%s [%i]'\n", t.name, (int)t.id);
-        return 1;
-    }
-
-    printf("[MQTT] PUB SUCCESS: Published %s on topic %s\n", data, topic);
-    return 0;
-}
-
-int setup_mqtt(void) {
-    /* initialize our subscription buffers */
-    memset(subscriptions, 0, (NUMOFSUBS * sizeof(emcute_sub_t)));
-
-    xtimer_sleep(10);
-
-    dev_id = EMCUTE_ID[strlen(EMCUTE_ID)-1] - '0';
-    printf("Dev id: %d\n", dev_id);
-
-
-    /* start the emcute thread */
-    thread_create(stack_emcute, sizeof(stack_emcute), EMCUTE_PRIO, 0, emcute_thread, NULL, "emcute");
-
-    // connect to MQTT-SN broker
-    printf("Connecting to MQTT-SN broker %s port %d.\n", SERVER_ADDR, SERVER_PORT);
-
-    sock_udp_ep_t gw = {
-        .family = AF_INET6,
-        .port = SERVER_PORT};
-
-    char *message = "connected";
-    size_t len = strlen(message);
-
-    /* parse address */
-    if (ipv6_addr_from_str((ipv6_addr_t *)&gw.addr.ipv6, SERVER_ADDR) == NULL) {
-        printf("error parsing IPv6 address\n");
-        return 1;
-    }
-
-    if (emcute_con(&gw, true, MQTT_TOPIC, message, len, 0) != EMCUTE_OK) {
-        printf("error: unable to connect to [%s]:%i\n", SERVER_ADDR, (int)gw.port);
-        return 1;
-    }
-
-    printf("Successfully connected to gateway at [%s]:%i\n", SERVER_ADDR, (int)gw.port);
-
-    // setup subscription to topic
-
-    unsigned flags = EMCUTE_QOS_0;
-    subscriptions[0].cb = on_pub;
-    strcpy(topics[0], MQTT_TOPIC_IN);
-    subscriptions[0].topic.name = MQTT_TOPIC_IN;
-
-    if (emcute_sub(&subscriptions[0], flags) != EMCUTE_OK) {
-        printf("error: unable to subscribe to %s\n", MQTT_TOPIC_IN);
-        return 1;
-    }
-
-    printf("Now subscribed to %s\n", MQTT_TOPIC_IN);
 
     return 0;
 }
@@ -338,7 +322,10 @@ void *measure_light(void *arg) {
 
     printf("Sampling light...\n");
     while (i < iterations) {
-        lux += isl29020_read(&dev);
+        //lux += isl29020_read(&dev);
+
+        // TODO: deal with this
+        lux = 5;
 
         avg += lux;
 
@@ -366,10 +353,27 @@ int last_temp = -1;
 void *measure_temp(void *arg) {
     (void)arg;
 
-    int16_t dtemp = 0;
-    lpsxxx_read_temp(&lpsxxx, &dtemp);    
+    uint16_t humidity = 0;
+    int16_t temperature = 0;
+    if (hts221_read_humidity(&hts221, &humidity) != HTS221_OK) {
+        puts("Cannot read humidity!");
+    }
+    if (hts221_read_temperature(&hts221, &temperature) != HTS221_OK) {
+        puts("Cannot read temperature!");
+    }
 
-    dtemp = dtemp/100;
+    printf("Temp: %d\n", temperature);
+
+    /**
+    char message[64];
+    sprintf(message, "H: %d.%d%%, T:%d.%dC",
+            (humidity / 10), (humidity % 10),
+            (temperature / 10), (temperature % 10));
+    printf("Sending message '%s'\n", message);
+    */
+
+    dint16_t dtemp = temperature / 100;
+    
 
     uint32_t utemp;
     if (dtemp <= 0) { /* Treat negative temperatures as inadmissible (room temperature <= 0 is LOW) */
@@ -386,7 +390,6 @@ void *measure_temp(void *arg) {
     msg_send(&msg, tmain);
 
     return NULL;
-
 }
 
 int started = -1;
@@ -435,11 +438,10 @@ void *main_loop(void *arg) {
             lux = msg2.content.value;
         }
 
-        
         printf("LUX: %lu\n", lux);
         printf("TEMP: %lu\n", temp);
         //puts("msg2 received\n");
-        
+
         char core_str[40];
 
         // TODO: may need to split these 2 (due to limited data that can be sent)
@@ -452,22 +454,21 @@ void *main_loop(void *arg) {
     }
 }
 
-static void _lpsxxx_usage(char *cmd)
-{
+static void _lpsxxx_usage(char *cmd) {
     printf("usage: %s <temperature|pressure>\n", cmd);
 }
-
 
 static int isl29020_handler(int argc, char *argv[]) {
     (void)argc;
     (void)argv;
 
-    printf("Light value: %5i LUX\n", isl29020_read(&dev));
+    //printf("Light value: %5i LUX\n", isl29020_read(&dev));
 
     return 0;
-} 
+}
 
 static int lpsxxx_handler(int argc, char *argv[]) {
+    /**
     if (argc < 2) {
         _lpsxxx_usage(argv[0]);
         return -1;
@@ -487,7 +488,7 @@ static int lpsxxx_handler(int argc, char *argv[]) {
         _lpsxxx_usage(argv[0]);
         return -1;
     }
-
+    */
     return 0;
 }
 
@@ -507,17 +508,25 @@ static int cmd_toggle_led(int argc, char *argv[]) {
 int init_sensors(void) {
     int res = 0;
 
-    lpsxxx_init(&lpsxxx, &lpsxxx_params[0]);
+    if (hts221_init(&hts221, &hts221_params[0]) != HTS221_OK) {
+        puts("Sensor initialization failed");
+        return 1;
+    }
 
-    if (isl29020_init(&dev, &isl29020_params[0]) != 0) {
-        res = 1;
+    if (hts221_power_on(&hts221) != HTS221_OK) {
+        puts("Sensor initialization power on failed");
+        return 1;
+    }
+
+    if (hts221_set_rate(&hts221, hts221.p.rate) != HTS221_OK) {
+        puts("Sensor continuous mode setup failed");
+        return 1;
     }
 
     return res;
 }
 
-static int _board_handler(int argc, char **argv)
-{
+static int _board_handler(int argc, char **argv) {
     /* These parameters are not used, avoid a warning during build */
     (void)argc;
     (void)argv;
@@ -527,8 +536,7 @@ static int _board_handler(int argc, char **argv)
     return 0;
 }
 
-static int _cpu_handler(int argc, char **argv)
-{
+static int _cpu_handler(int argc, char **argv) {
     /* These parameters are not used, avoid a warning during build */
     (void)argc;
     (void)argv;
@@ -545,22 +553,22 @@ static int cmd_status(int argc, char *argv[]) {
     printf("%d %d %d\n", last_lux, last_temp, curr_led);
 
     return 0;
-} 
+}
 
 static const shell_command_t shell_commands[] = {
-    { "status", "get a status report", cmd_status },
-    { "led", "toggle led", cmd_toggle_led },
-    { "isl", "read the isl29020 values", isl29020_handler },
-    { "lps", "read the lps331ap values", lpsxxx_handler },
-    { "board", "Print the board name", _board_handler },
-    { "cpu", "Print the cpu name", _cpu_handler },
-    { NULL, NULL, NULL }
-};
+    {"status", "get a status report", cmd_status},
+    {"led", "toggle led", cmd_toggle_led},
+    {"isl", "read the isl29020 values", isl29020_handler},
+    {"lps", "read the lps331ap values", lpsxxx_handler},
+    {"board", "Print the board name", _board_handler},
+    {"cpu", "Print the cpu name", _cpu_handler},
+    {NULL, NULL, NULL}};
 
 int main(void) {
-
-    puts("Setting up ethos and emcute");
-    setup_mqtt();
+    puts("Setting lora");
+    lora_init();
+    thread_create(_recv_stack, sizeof(_recv_stack),
+               THREAD_PRIORITY_MAIN - 1, 0, _recv, NULL, "recv thread"); 
 
     printf("Initializing sensors\n");
     int sensors_status = init_sensors();
@@ -574,7 +582,6 @@ int main(void) {
 
     printf("Initializing actuators\n");
     int actuators_status = init_actuators();
-    
 
     if (actuators_status == 0)
         puts("All actuators initialized successfully!");
@@ -583,14 +590,10 @@ int main(void) {
         return 2;
     }
 
-    msg_init_queue(_main_msg_queue, MAIN_QUEUE_SIZE);
-    puts("RIOT network stack example application");
-    
-
     puts("Starting main_loop thread...");
     /* Perform sensor readings on a separate thread in order to host a shell on the main thread*/
     thread_create(stack_loop, sizeof(stack_loop), EMCUTE_PRIO, 0, main_loop, NULL, "main_loop");
-    puts("Thread started successfully!");    
+    puts("Thread started successfully!");
 
     char line_buf[SHELL_DEFAULT_BUFSIZE];
     shell_run(shell_commands, line_buf, SHELL_DEFAULT_BUFSIZE);
