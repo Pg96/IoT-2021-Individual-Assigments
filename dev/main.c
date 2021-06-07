@@ -106,10 +106,12 @@ static void *_recv(void *arg) {
     return NULL;
 }
 
-void send(int val) {
-    printf("VALUE: %d\n", val);
+void send(char[] message) {
+    //printf("VALUE: %d\n", val);
+    /**
     char message[50];
     sprintf(message, "{\"id\":\"%s\",\"filling\":\"%d\"}", TTN_DEV_ID, val);
+    */
 
     printf("Sending message '%s'\n", message);
 
@@ -117,7 +119,7 @@ void send(int val) {
     size_t outl;
     printf("Trying to encode the message (len: %u )...\n", inl);
     char *encoded = base64_encode(message, inl, &outl);
-    printf("Result: %s (%zu )\n", encoded, outl);
+    printf("Result: %s (%u )\n", encoded, outl);
     /* send the message here */
     if (semtech_loramac_send(&loramac,
                              (uint8_t *)message, strlen(message)) != SEMTECH_LORAMAC_TX_DONE) {
@@ -358,8 +360,6 @@ void *measure_temp(void *arg) {
         puts("Cannot read temperature!");
     }
 
-    printf("Temp: %d\n", temperature);
-
     /**
     char message[64];
     sprintf(message, "H: %d.%d%%, T:%d.%dC",
@@ -440,11 +440,11 @@ void *main_loop(void *arg) {
 
         char core_str[40];
 
-        // TODO: may need to split these 2 (due to limited data that can be sent)
+        // TODO: may need to split these 2 (due to limited data that can be sent) [ PROB NOT ]
         if ((temp > temp_high_threshold || temp < temp_low_threshold) || lux >= lux_threshold) {
             sprintf(core_str, "{\"id\":\"%s\",\"lux\":\"%lu\",\"temp\":\"%lu\",\"lamp\":\"%d\",\"led\":\"%d\"}", TTN_DEV_ID, lux, temp, curr_lux, curr_led);
             
-            //TODO: SEND MSG VIA LORA
+            send(core_str);
 
             printf("%s (%d)\n", core_str, strlen(core_str));
         }

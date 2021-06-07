@@ -29,8 +29,10 @@ LORA_REGION ?= EU868
 USEMODULE += shell
 USEMODULE += ps
 
-TTN_DEV_ID ?= 01
-CFLAGS += -DTTN_DEV_ID='"$(TTN_DEV_ID)"'
+
+ifneq (,$(TTN_DEV_ID))
+  CFLAGS += -DTTN_DEV_ID=\"$(TTN_DEV_ID)\"
+endif
 
 # Comment this out to disable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the
