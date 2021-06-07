@@ -22,8 +22,8 @@
 
 #define LIGHT_ITER 5 /* Light measurement - number of iterations */
 
-#define DELAY (180000LU * US_PER_MS) /* 1 minute - Delay between main_loop() iterations */
-//60000LU = 1 minute ; 300000LU = 5 minutes
+#define DELAY (30000LU * US_PER_MS) /* 1 minute - Delay between main_loop() iterations */
+//60000LU = 1 minute ; 300000LU = 5 minutes ; 180000LU
 
 #define LIGHT_SLEEP_TIME 1 /* Determines the sleep time (60 seconds) between subsequent iterations in the measure_light() loop */
 
@@ -114,7 +114,7 @@ void send(int val) {
 
     size_t inl = strlen(message);
     size_t outl;
-    printf("Trying to encode the message (len: %zu )...\n", inl);
+    printf("Trying to encode the message (len: %u )...\n", inl);
     char *encoded = base64_encode(message, inl, &outl);
     printf("Result: %s (%zu )\n", encoded, outl);
     /* send the message here */
@@ -127,22 +127,6 @@ void send(int val) {
 }
 
 int lora_init(void) {
-    /* initialize the HTS221 sensor */
-    if (hts221_init(&hts221, &hts221_params[0]) != HTS221_OK) {
-        puts("Sensor initialization failed");
-        return 1;
-    }
-
-    if (hts221_power_on(&hts221) != HTS221_OK) {
-        puts("Sensor initialization power on failed");
-        return 1;
-    }
-
-    if (hts221_set_rate(&hts221, hts221.p.rate) != HTS221_OK) {
-        puts("Sensor continuous mode setup failed");
-        return 1;
-    }
-
     /* initialize the loramac stack */
     semtech_loramac_init(&loramac);
 
@@ -160,6 +144,11 @@ int lora_init(void) {
         return 1;
     }
     puts("Join procedure succeeded");
+
+    puts("Starting recv thread");
+    thread_create(_recv_stack, sizeof(_recv_stack),
+               THREAD_PRIORITY_MAIN - 1, 0, _recv, NULL, "recv thread"); 
+
 
     return 0;
 }
@@ -323,12 +312,15 @@ void *measure_light(void *arg) {
     const int iterations = LIGHT_ITER;
     int i = 0;
 
+    int max = 50;
+    int min = 0;
+
     printf("Sampling light...\n");
     while (i < iterations) {
         //lux += isl29020_read(&dev);
 
-        // TODO: deal with this
-        lux = 5;
+        // TODO: deal with this in a better way
+        lux = (rand() % (max+1-min)) + min;
 
         avg += lux;
 
@@ -375,7 +367,7 @@ void *measure_temp(void *arg) {
     printf("Sending message '%s'\n", message);
     */
 
-    int16_t dtemp = temperature / 100;
+    int16_t dtemp = temperature / 10;
     
 
     uint32_t utemp;
@@ -453,7 +445,7 @@ void *main_loop(void *arg) {
             
             //TODO: SEND MSG VIA LORA
 
-            printf("%s\n", core_str);
+            printf("%s (%d)\n", core_str, strlen(core_str));
         }
 
         xtimer_periodic_wakeup(&last, DELAY);
@@ -531,6 +523,10 @@ static const shell_command_t shell_commands[] = {
     {NULL, NULL, NULL}};
 
 int main(void) {
+    srand(time(NULL));
+
+    printf("%s\n", TTN_DEV_ID);
+
     puts("Initializing lora");
     lora_init();
 
@@ -556,13 +552,7 @@ int main(void) {
 
     puts("Starting main_loop thread...");
     /* Perform sensor readings on a separate thread in order to host a shell on the main thread*/
-    // TODO: THIS MAY NEED MODIFICATIONS
     thread_create(stack_loop, sizeof(stack_loop), THREAD_PRIORITY_MAIN, 0, main_loop, NULL, "main_loop");
-
-        // TODO: THIS MAY NEED MODIFICATIONS
-
-    thread_create(_recv_stack, sizeof(_recv_stack),
-               THREAD_PRIORITY_MAIN - 1, 0, _recv, NULL, "recv thread"); 
 
     puts("Thread started successfully!");
 
