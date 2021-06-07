@@ -3,8 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "net/loramac.h"     /* core loramac definitions */
+#include "semtech_loramac.h" /* package API */
 #include "hts221.h"
 #include "hts221_params.h"
+
 #include "jsmn.h"
 #include "msg.h"
 #include "periph/gpio.h"
