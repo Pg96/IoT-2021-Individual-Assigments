@@ -17,7 +17,10 @@
 #include "timex.h"
 #include "xtimer.h"
 
-#define CONFIG_EMCUTE_DEFAULT_PORT (1883U)
+#ifndef TTN_DEV_ID
+#define TTN_DEV_ID ("power_saver1")
+#endif
+
 
 #define JSMN_HEADER
 
