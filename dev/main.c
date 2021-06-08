@@ -22,6 +22,9 @@
 #endif
 
 
+//TODO: Edge checks
+//TODO: fix ID thing
+
 #define JSMN_HEADER
 
 #define LIGHT_ITER 5 /* Light measurement - number of iterations */
@@ -500,6 +503,16 @@ static int _board_handler(int argc, char **argv) {
     return 0;
 }
 
+static int _dev_id(int argc, char **argv) {
+    /* These parameters are not used, avoid a warning during build */
+    (void)argc;
+    (void)argv;
+
+    puts(TTN_DEV_ID);
+
+    return 0;
+}
+
 static int _cpu_handler(int argc, char **argv) {
     /* These parameters are not used, avoid a warning during build */
     (void)argc;
@@ -524,6 +537,7 @@ static const shell_command_t shell_commands[] = {
     {"led", "toggle led", cmd_toggle_led},
     {"board", "Print the board name", _board_handler},
     {"cpu", "Print the cpu name", _cpu_handler},
+    {"dev", "Print the device's id", _dev_id},
     {NULL, NULL, NULL}};
 
 int main(void) {
