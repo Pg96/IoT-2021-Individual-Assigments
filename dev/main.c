@@ -22,7 +22,6 @@
 #endif
 
 
-//TODO: Edge checks
 //TODO: fix ID thing
 
 #define JSMN_HEADER
@@ -447,7 +446,7 @@ void *main_loop(void *arg) {
         char core_str[40];
 
         // TODO: may need to split these 2 (due to limited data that can be sent) [ PROB NOT ]
-        if ((temp > temp_high_threshold || temp < temp_low_threshold) || lux >= lux_threshold) {
+        if ((temp > temp_high_threshold || temp < temp_low_threshold) || lux >= lux_threshold) { // EDGE CHECK
             sprintf(core_str, "{\"id\":\"%s\",\"lux\":\"%lu\",\"temp\":\"%lu\",\"lamp\":\"%d\",\"led\":\"%d\"}", TTN_DEV_ID, lux, temp, curr_lux, curr_led);
             
             send(core_str);
