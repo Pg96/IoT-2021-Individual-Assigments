@@ -1,1 +1,1 @@
-SELECT id, lux, temp FROM 'localgateway_to_awsiot'
+SELECT end_device_ids.device_id as id, dev_eui as devEUI, uplink_message.frm_payload as payload FROM 'thethings/lorawan/ttn-integration/uplink'
