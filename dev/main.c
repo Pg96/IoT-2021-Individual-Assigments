@@ -61,6 +61,10 @@ static int mod_table[] = {0, 2, 1};
 int dev_id = -1;
 
 
+uint32_t temp_high_threshold = -1;
+uint32_t temp_low_threshold = -1;
+uint32_t lux_threshold = -1;
+
 char *base64_encode(const char *data,
                     size_t input_length,
                     size_t *output_length) {
@@ -238,10 +242,7 @@ int parse_command(char *command) {
         else if (strcmp(keyString, "acts") == 0) {
             int val = parse_val(tokens[i + 1], command);
 
-            if (val < 1 || val > 2) {
-                printf("An invalid number of actuator commands was passed: %d", val);
-                return 7;
-            }
+            printf("Activations: %d\n", val);
 
             activations = val;
         } else if (strcmp(keyString, "lux") == 0) {
@@ -274,7 +275,42 @@ int parse_command(char *command) {
                 //puts("LeBreak");
                 break;
             }
-        } else {
+        } else if (strcmp(keyString, "lux_t") == 0) {
+            int val = parse_val(tokens[i + 1], command);
+
+            lux_threshold = val;
+            printf("Setting to: %d\n", val);
+
+            acts++;
+            if (acts == activations) {
+                //puts("LeBreak");
+                break;
+            }
+        } else if (strcmp(keyString, "temp_ht") == 0) {
+            int val = parse_val(tokens[i + 1], command);
+
+            temp_high_threshold = val;
+            printf("Setting to: %d\n", val);
+
+
+            acts++;
+            if (acts == activations) {
+                //puts("LeBreak");
+                break;
+            }
+        } else if (strcmp(keyString, "temp_lt") == 0) {
+            int val = parse_val(tokens[i + 1], command);
+
+            temp_low_threshold = val;
+            printf("Setting to: %d\n", val);
+
+
+            acts++;
+            if (acts == activations) {
+                //puts("LeBreak");
+                break;
+            }
+        }  else {
             printf("Key not recognized: %s\n", keyString);
         }
     }
@@ -282,9 +318,9 @@ int parse_command(char *command) {
     return 0;
 }
 
-int curr_lux = -1;
+int curr_lux = 0;
 
-int curr_led = -1;
+int curr_led = 0;
 int toggle_rgbled(int code) {
     /* Avoid re-triggering the same action */
     if (curr_led == code)
@@ -407,9 +443,7 @@ void *measure_temp(void *arg) {
 
 int started = -1;
 
-uint32_t temp_high_threshold = -1;
-uint32_t temp_low_threshold = -1;
-uint32_t lux_threshold = -1;
+
 
 void *main_loop(void *arg) {
     (void)arg;
