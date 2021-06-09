@@ -9,10 +9,10 @@ Web dashboard: https://dev867.dyaycgfnuds5z.amplifyapp.com/
 ### IoT-Lab Setup
 In order to set up the FIT/IoT-Lab enviroment, it is enough to follow the Jupyter notebook provided in the _iot-lab_ folder, which explains every step to perform in order to reproduce the experiment, flash the firmwares and run the MQTT/SN broker plus the transparent bridge. 
 ### Remote setup
-0) Create an application on *AWS IoT Core* & download the certificates and private keys from the IoT core to be used by the `mosquitto` instance on your local machine.
+0) Create an application on *AWS IoT Core*.
+1) Create an application in TTN && Follow the instruction in >LINK< for TTN
 1) Set up the *IoT core* rule as in `./iot_core/rules.sql`. Two actions should be linked to the rule: 
-    1. putting the data in a *DynamoDB* table (using `${timestamp()}` as primary key and `${id}` as sort key) in the `device_data` column; 
-    2. sending a message to a lambda function (`./lambda.py`).
+    1. sending a message to a lambda function (`./iot_core/lambda.py`).
 2) Add the other lambdas that can be found in the `./iot_core` folder to aws lambda and set up an *AWS API Gateway* for each one of them.
 3) Create a website on *AWS Amplify* using the code for the web dashboard in `./web_dashboard/index.html`
 

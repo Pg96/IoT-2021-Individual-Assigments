@@ -58,6 +58,9 @@ static char encoding_table[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
                                 '4', '5', '6', '7', '8', '9', '+', '/'};
 static int mod_table[] = {0, 2, 1};
 
+int dev_id = -1;
+
+
 char *base64_encode(const char *data,
                     size_t input_length,
                     size_t *output_length) {
@@ -85,6 +88,8 @@ char *base64_encode(const char *data,
     return encoded_data;
 }
 
+int parse_command(char *command);
+
 static void *_recv(void *arg) {
     msg_init_queue(_recv_queue, RECV_MSG_QUEUE);
     (void)arg;
@@ -100,7 +105,7 @@ static void *_recv(void *arg) {
         size_t inl = strlen(msg);
 
         
-        printf("Processing message: %s\n", msg);
+        printf("Processing message: %s (len = %u) \n", msg, inl);
         
         parse_command(msg);
 
@@ -186,7 +191,6 @@ int parse_val(jsmntok_t key, char *command) {
 
 int toggle_rgbled(int code);
 
-int dev_id = -1;
 /* Parse the reply from the IoT Core*/
 int parse_command(char *command) {
     jsmn_parser parser;
