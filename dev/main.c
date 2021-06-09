@@ -450,15 +450,15 @@ void *main_loop(void *arg) {
         printf("TEMP: %lu\n", temp);
         //puts("msg2 received\n");
 
-        char core_str[40];
+        char core_str[100];
 
         // TODO: may need to split these 2 (due to limited data that can be sent) [ PROB NOT ]
         if ((temp > temp_high_threshold || temp < temp_low_threshold) || lux >= lux_threshold) { // EDGE CHECK
             sprintf(core_str, "{\"id\":\"%s\",\"lux\":\"%lu\",\"temp\":\"%lu\",\"lamp\":\"%d\",\"led\":\"%d\"}", TTN_DEV_ID, lux, temp, curr_lux, curr_led);
-            
-            send(core_str);
 
             printf("%s (%d)\n", core_str, strlen(core_str));
+
+            send(core_str);
         }
 
         xtimer_periodic_wakeup(&last, DELAY);
