@@ -492,7 +492,7 @@ void *main_loop(void *arg) {
         char core_str[100];
 
         // TODO: may need to split these 2 (due to limited data that can be sent) [ PROB NOT ]
-        printf("%u %u %u", temp_high_threshold, temp_low_threshold, lux_threshold);
+        printf("%lu %lu %lu", temp_high_threshold, temp_low_threshold, lux_threshold);
         if ((temp > temp_high_threshold || temp < temp_low_threshold) || lux >= lux_threshold) { // EDGE CHECK
             sprintf(core_str, "{\"id\":\"%s\",\"lux\":\"%lu\",\"temp\":\"%lu\",\"lamp\":\"%d\",\"led\":\"%d\"}", TTN_DEV_ID, lux, temp, curr_lux, curr_led);
 
