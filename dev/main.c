@@ -21,9 +21,6 @@
 #define TTN_DEV_ID ("power_saver1")
 #endif
 
-
-//TODO: fix ID thing
-
 #define JSMN_HEADER
 
 #define LIGHT_ITER 5 /* Light measurement - number of iterations */
@@ -98,15 +95,17 @@ static void *_recv(void *arg) {
         printf("Data received: %s, port: %d\n",
                (char *)loramac.rx_data.payload, loramac.rx_data.port);
 
-        /*
+        
         char * msg = (char *)loramac.rx_data.payload;
         size_t inl = strlen(msg);
-        printf("Trying to decode the message (len: %u )...\n", inl);
-        size_t outl;
-        //unsigned char* decoded =  base64_decode(msg, inl, &outl);
+
         
-        printf("Result: ( %u )\n", outl);
-        */
+        printf("Processing message: %s\n", msg);
+        
+        parse_command(msg);
+
+        free(msg);
+
     }
     return NULL;
 }
@@ -135,6 +134,10 @@ void send(char* message) {
 }
 
 int lora_init(void) {
+    /* Get the device's last number as identifier */
+    dev_id = TTN_DEV_ID[strlen(TTN_DEV_ID)-1] - '0';
+    printf("Dev id: %d\n", dev_id);
+
     /* initialize the loramac stack */
     semtech_loramac_init(&loramac);
 
