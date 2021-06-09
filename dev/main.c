@@ -34,7 +34,7 @@
 #define TEMP_TOO_HIGH 0
 #define TEMP_OK 2
 
-#define MQTT_TOKENS 8 /* The number of tokens (key-value) that will be received by the IoT Core */
+#define MQTT_TOKENS 14 /* The number of tokens (key-value) that will be received by the IoT Core */
 
 #define RECV_MSG_QUEUE (4U)
 static msg_t _recv_queue[RECV_MSG_QUEUE];
@@ -201,7 +201,9 @@ int parse_command(char *command) {
 
     jsmn_init(&parser);
 
-    int r = jsmn_parse(&parser, command, strlen(command), tokens, 10);
+    printf("PARSING: %s (%d)", command, strlen(command));
+
+    int r = jsmn_parse(&parser, command, strlen(command), tokens, 14);
 
     if (r < 0) {
         printf("Failed to parse JSON: %d\n", r);
