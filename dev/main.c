@@ -130,8 +130,11 @@ void send(char* message) {
     char *encoded = base64_encode(message, inl, &outl);
     printf("Result: %s (%u )\n", encoded, outl);
     /* send the message here */
-    if (semtech_loramac_send(&loramac,
-                             (uint8_t *)message, strlen(message)) != SEMTECH_LORAMAC_TX_DONE) {
+    uint8_t status = semtech_loramac_send(&loramac,
+                             (uint8_t *)message, strlen(message));
+    printf("Status: %u\n", status);
+
+    if (status != SEMTECH_LORAMAC_TX_DONE) {
         printf("Cannot send message '%s'\n", message);
     } else {
         printf("Message '%s' sent\n", message);
