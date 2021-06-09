@@ -1,1 +1,1 @@
-SELECT end_device_ids.device_id as id, dev_eui as devEUI, uplink_message.frm_payload as payload FROM 'thethings/lorawan/ttn-integration/uplink'
+SELECT end_device_ids.device_id as id, end_device_ids.dev_eui as devEUI, uplink_message.frm_payload as payload FROM 'thethings/lorawan/ttn-integration/uplink'
