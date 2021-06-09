@@ -25,7 +25,7 @@
 
 #define LIGHT_ITER 5 /* Light measurement - number of iterations */
 
-#define DELAY (30000LU * US_PER_MS) /* 1 minute - Delay between main_loop() iterations */
+#define DELAY (60000LU * US_PER_MS) /* 1 minute - Delay between main_loop() iterations */
 //60000LU = 1 minute ; 300000LU = 5 minutes ; 180000LU
 
 #define LIGHT_SLEEP_TIME 1 /* Determines the sleep time (60 seconds) between subsequent iterations in the measure_light() loop */
