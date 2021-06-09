@@ -107,7 +107,7 @@ static void *_recv(void *arg) {
         
         printf("Processing message: %s (len = %u) \n", msg, inl);
         
-        //parse_command(msg);
+        parse_command(msg);
 
         //free(msg);
 
@@ -126,7 +126,7 @@ void send(char* message) {
 
     size_t inl = strlen(message);
     size_t outl;
-    printf("Trying to encode the message (len: %u )...\n", inl);
+    //printf("Trying to encode the message (len: %u )...\n", inl);
     char *encoded = base64_encode(message, inl, &outl);
     printf("Result: %s (%u )\n", encoded, outl);
     /* send the message here */
@@ -233,7 +233,7 @@ int parse_command(char *command) {
             }
         }
 
-        if (strcmp(keyString, "acts") == 0) {
+        else if (strcmp(keyString, "acts") == 0) {
             int val = parse_val(tokens[i + 1], command);
 
             if (val < 1 || val > 2) {
@@ -331,7 +331,7 @@ void *measure_light(void *arg) {
     int i = 0;
 
     int max = 50;
-    int min = 0;
+    int min = 1;
 
     printf("Sampling light...\n");
     while (i < iterations) {
