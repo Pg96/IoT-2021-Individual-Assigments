@@ -201,9 +201,9 @@ int parse_command(char *command) {
 
     jsmn_init(&parser);
 
-    printf("PARSING: %s (%d)", command, strlen(command));
+    printf("PARSING: %s (%d)\n", command, strlen(command));
 
-    int r = jsmn_parse(&parser, command, strlen(command), tokens, 14);
+    int r = jsmn_parse(&parser, command, strlen(command), tokens, 16);
 
     if (r < 0) {
         printf("Failed to parse JSON: %d\n", r);
