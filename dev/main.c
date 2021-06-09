@@ -107,9 +107,9 @@ static void *_recv(void *arg) {
         
         printf("Processing message: %s (len = %u) \n", msg, inl);
         
-        parse_command(msg);
+        //parse_command(msg);
 
-        free(msg);
+        //free(msg);
 
     }
     return NULL;
