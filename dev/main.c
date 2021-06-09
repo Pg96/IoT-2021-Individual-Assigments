@@ -108,12 +108,9 @@ static void *_recv(void *arg) {
         char * msg = (char *)loramac.rx_data.payload;
         size_t inl = strlen(msg);
 
-        
         printf("Processing message: %s (len = %u) \n", msg, inl);
         
         parse_command(msg);
-
-        //free(msg);
 
     }
     return NULL;
@@ -205,7 +202,7 @@ int parse_command(char *command) {
 
     jsmn_init(&parser);
 
-    printf("PARSING: %s (%d)\n", command, strlen(command));
+    //printf("PARSING: %s (%d)\n", command, strlen(command));
 
     int r = jsmn_parse(&parser, command, strlen(command), tokens, 16);
 
@@ -228,7 +225,7 @@ int parse_command(char *command) {
         char keyString[length + 1];
         memcpy(keyString, &command[key.start], length);
         keyString[length] = '\0';
-        printf("Key: %s\n", keyString);
+        //printf("Key: %s\n", keyString);
 
         if (strcmp(keyString, "id") == 0) {
             int val = parse_val(tokens[i + 1], command);
@@ -279,7 +276,7 @@ int parse_command(char *command) {
             int val = parse_val(tokens[i + 1], command);
 
             lux_threshold = val;
-            printf("Setting to: %d\n", val);
+            //printf("Setting to: %d\n", val);
 
             acts++;
             if (acts == activations) {
@@ -290,7 +287,7 @@ int parse_command(char *command) {
             int val = parse_val(tokens[i + 1], command);
 
             temp_high_threshold = val;
-            printf("Setting to: %d\n", val);
+            //printf("Setting to: %d\n", val);
 
 
             acts++;
@@ -302,7 +299,7 @@ int parse_command(char *command) {
             int val = parse_val(tokens[i + 1], command);
 
             temp_low_threshold = val;
-            printf("Setting to: %d\n", val);
+            //printf("Setting to: %d\n", val);
 
 
             acts++;
@@ -489,11 +486,12 @@ void *main_loop(void *arg) {
         printf("TEMP: %lu\n", temp);
         //puts("msg2 received\n");
 
-        char core_str[100];
 
         // TODO: may need to split these 2 (due to limited data that can be sent) [ PROB NOT ]
-        printf("%lu %lu %lu", temp_high_threshold, temp_low_threshold, lux_threshold);
+        printf("%lu %lu %lu\n", temp_high_threshold, temp_low_threshold, lux_threshold);
         if ((temp > temp_high_threshold || temp < temp_low_threshold) || lux >= lux_threshold) { // EDGE CHECK
+            char core_str[100];
+
             sprintf(core_str, "{\"id\":\"%s\",\"lux\":\"%lu\",\"temp\":\"%lu\",\"lamp\":\"%d\",\"led\":\"%d\"}", TTN_DEV_ID, lux, temp, curr_lux, curr_led);
 
             printf("%s (%d)\n", core_str, strlen(core_str));
