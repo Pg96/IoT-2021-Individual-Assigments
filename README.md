@@ -4,6 +4,25 @@ Individual assignments for the IoT 2021 Course @ Sapienza University of Rome
 Web dashboard: https://dev867.dyaycgfnuds5z.amplifyapp.com/
 
 ## 1. Questions
+### 1.1 How is the long-range low-power wide are network going to affect the IoT platform?
+
+As *power saver* nodes are supposed to be deployed 1 per room, a possible problem may be due to several messages travelling towards the gateway at the same time, this can be solved by starting the nodes at different times to avoid overlapping sendings.
+
+Considering that this application is not time-critical, messages can allow some delays to be sent or received. Furthermore, the messages sent by the *power saver* nodes are small enough (in terms of bytes) to be sent without problems using the selected Spreading Factor (9 with a 1760 bit/s datarate and a 123-byte maximum payload size).
+
+Nevertheless, considering the technical limitations of LoRaWAN, it makes sense to try to reduce the quanity and the frequency of the data sent to the cloud, in order to improve the energetic efficiency. For this reason, **the checks on the light and temperature thresholds were moved within the devices**. In this way, messages are sent from the nodes to the cloud **only** when an anomalous situation occurs (i.e., one of the sensed values exceeds one of the thresholds), instead on during normal situations (which are verified most of the time), the nodes do not send anything to the cloud. 
+Since in the two previous assignments those checks were performed on the cloud, thus allowing to change the thresholds at once for all the devices, now the cloud infrastructure sends directly to the nodes the values that are needed to update those thresholds on the devices themselves.
+
+### 1.2 What are the connected components, the protocols to connect them and the overall IoT architecture?
+* **Network diagram**
+![alt text](images/network.png "Network diagram")
+* **Software components** - The only major difference in the cloud with respect to the other assignments is that now the lambda function that handles the uplink input is the one that is tasked with inserting the values inside the DynamoDB table.
+Differently from the second assignment instead, now **The Things Network** is an intermediate node between the AWS IoT Core and the devices in the testbed. The nodes in IoT-lab are the [ST B-L072Z-LRWAN1](https://www.iot-lab.info/docs/boards/st-b-l072z-lrwan1/) ones.
+* **Architecture diagram** 
+![alt text](images/architecture.png "Architecture diagram")
+The FIT/IoT-Lab Testbed node in the diagram includes the [ST B-L072Z-LRWAN1](https://www.iot-lab.info/docs/boards/st-b-l072z-lrwan1/) ndoes.
+
+### 1.3 Performance Evaluation
 
 ## 2. Hands-on Walkthrough
 ### IoT-Lab Setup
@@ -27,6 +46,6 @@ Then follow the [documentation to integrate TTN and AWS IoT](https://www.thethin
 
 
 ## Extra: Web Dashboard Example
-![alt text](images/1v2.png "Dashboard")
-![alt text](images/2v2.png "Dashboard")
+![alt text](images/lora_dash.png "Dashboard")
+![alt text](images/lora_dash2.png "Dashboard")
 
