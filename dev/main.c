@@ -103,6 +103,7 @@ static void *_recv(void *arg) {
         /* blocks until a message is received */
 
         if (first == 1) {
+            xtimer_sleep(5);
             continue;
         }
 
@@ -150,7 +151,7 @@ void send(char* message) {
         printf("Message '%s' sent\n", message);
 
         if (sec == 1) {
-            first = 1;
+            first = 0;
         }
         sec = 1;
     }
