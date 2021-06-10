@@ -7,10 +7,17 @@ Web dashboard: https://dev867.dyaycgfnuds5z.amplifyapp.com/
 
 ## 2. Hands-on Walkthrough
 ### IoT-Lab Setup
-In order to set up the FIT/IoT-Lab enviroment, it is enough to follow the Jupyter notebook provided in the _iot-lab_ folder, which explains every step to perform in order to reproduce the experiment, flash the firmwares and run the MQTT/SN broker plus the transparent bridge. 
-### Remote setup
+In order to set up the FIT/IoT-Lab enviroment, it is enough to follow the Jupyter notebook provided in the _iot-lab_ folder, which explains every step to perform in order to reproduce the experiment.
+### TTN Setup
+Create an application on **The Things Network** as well as a number of end devices with the following characteristics:
+* LoRaWAN Version = MAC V1.0.2
+* Regional Parameters Version = PHY V1.0.2 REV B
+* Frequency plan = Europe 863-870MHz (SF9 for RX2)
+* Activation mode = OTAA
+
+Then follow the [documentation to integrate TTN and AWS IoT](https://www.thethingsindustries.com/docs/integrations/aws-iot/default/), as well as that for [handling messages](https://www.thethingsindustries.com/docs/integrations/aws-iot/default/messages/).
+### AWS setup
 0) Create an application on *AWS IoT Core*.
-1) Create an application in TTN && Follow the instruction in >LINK< for TTN
 1) Set up the *IoT core* rule as in `./iot_core/rules.sql`. Two actions should be linked to the rule: 
     1. sending a message to a lambda function (`./iot_core/lambda.py`).
 2) Add the other lambdas that can be found in the `./iot_core` folder to aws lambda and set up an *AWS API Gateway* for each one of them.
