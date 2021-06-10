@@ -114,8 +114,11 @@ static void *_recv(void *arg) {
         //printf("Processing message: %s (len = %u) \n", msg, inl);
         
         if (first == 0) {
-            parse_command(msg);
             printf(" >> Parsing... (new message)\n");
+
+            parse_command(msg);
+
+            first = 1;            
         }
         else {
             printf(" >> Ignored (old message)\n");
@@ -250,6 +253,9 @@ int parse_command(char *command) {
                 printf("This message is not meant for me: %d", val);
                 return 0;
             }
+            else {
+                puts("Message for me received.")
+            }
         }
 
         else if (strcmp(keyString, "acts") == 0) {
@@ -292,7 +298,7 @@ int parse_command(char *command) {
             int val = parse_val(tokens[i + 1], command);
 
             lux_threshold = val;
-            //printf("Setting to: %d\n", val);
+            printf("Setting lux threshold to: %d\n", val);
 
             acts++;
             if (acts == activations) {
@@ -303,7 +309,7 @@ int parse_command(char *command) {
             int val = parse_val(tokens[i + 1], command);
 
             temp_high_threshold = val;
-            //printf("Setting to: %d\n", val);
+            printf("Setting temperature upper threshold to: %d\n", val);
 
 
             acts++;
@@ -315,7 +321,7 @@ int parse_command(char *command) {
             int val = parse_val(tokens[i + 1], command);
 
             temp_low_threshold = val;
-            //printf("Setting to: %d\n", val);
+            printf("Setting temperature lower threshold to: %d\n", val);
 
 
             acts++;
