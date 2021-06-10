@@ -113,7 +113,7 @@ static void *_recv(void *arg) {
 
         
         char * msg = (char *)loramac.rx_data.payload;
-        size_t inl = strlen(msg);
+        //size_t inl = strlen(msg);
 
         //printf("Processing message: %s (len = %u) \n", msg, inl);
         
