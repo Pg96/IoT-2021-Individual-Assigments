@@ -298,7 +298,7 @@ int parse_command(char *command) {
             int val = parse_val(tokens[i + 1], command);
 
             lux_threshold = val;
-            printf("Setting lux threshold to: %d\n", val);
+            printf("> Setting lux threshold to: %d\n", val);
 
             acts++;
             if (acts == activations) {
@@ -309,7 +309,7 @@ int parse_command(char *command) {
             int val = parse_val(tokens[i + 1], command);
 
             temp_high_threshold = val;
-            printf("Setting temperature upper threshold to: %d\n", val);
+            printf("> Setting temperature upper threshold to: %d\n", val);
 
 
             acts++;
@@ -321,7 +321,7 @@ int parse_command(char *command) {
             int val = parse_val(tokens[i + 1], command);
 
             temp_low_threshold = val;
-            printf("Setting temperature lower threshold to: %d\n", val);
+            printf("> Setting temperature lower threshold to: %d\n", val);
 
 
             acts++;
