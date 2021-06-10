@@ -25,7 +25,7 @@
 
 #define LIGHT_ITER 5 /* Light measurement - number of iterations */
 
-#define DELAY (60000LU * US_PER_MS) /* 1 minute - Delay between main_loop() iterations */
+#define DELAY (150000LU * US_PER_MS) /* 1 minute - Delay between main_loop() iterations */
 //60000LU = 1 minute ; 300000LU = 5 minutes ; 180000LU
 
 #define LIGHT_SLEEP_TIME 1 /* Determines the sleep time (60 seconds) between subsequent iterations in the measure_light() loop */
@@ -94,11 +94,19 @@ char *base64_encode(const char *data,
 
 int parse_command(char *command);
 
+int first = 1;
+
 static void *_recv(void *arg) {
     msg_init_queue(_recv_queue, RECV_MSG_QUEUE);
     (void)arg;
     while (1) {
         /* blocks until a message is received */
+
+        if (first == 1) {
+            first = 0;
+            continue;
+        }
+
         semtech_loramac_recv(&loramac);
         loramac.rx_data.payload[loramac.rx_data.payload_len] = 0;
         printf("Data received: %s, port: %d\n",
@@ -493,7 +501,7 @@ void *main_loop(void *arg) {
 
             sprintf(core_str, "{\"id\":\"%s\",\"lux\":\"%lu\",\"temp\":\"%lu\",\"lamp\":\"%d\",\"led\":\"%d\"}", TTN_DEV_ID, lux, temp, curr_lux, curr_led);
 
-            printf("%s (%d)\n", core_str, strlen(core_str));
+            printf("Thresholds exceededs, sending: %s (%d)\n", core_str, strlen(core_str));
 
             send(core_str);
         }
