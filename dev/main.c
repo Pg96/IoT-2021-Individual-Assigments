@@ -102,11 +102,6 @@ static void *_recv(void *arg) {
     while (1) {
         /* blocks until a message is received */
 
-        if (first == 1) {
-            xtimer_sleep(5);
-            continue;
-        }
-
         semtech_loramac_recv(&loramac);
         loramac.rx_data.payload[loramac.rx_data.payload_len] = 0;
         printf("Data received: %s, port: %d\n",
@@ -118,7 +113,8 @@ static void *_recv(void *arg) {
 
         //printf("Processing message: %s (len = %u) \n", msg, inl);
         
-        parse_command(msg);
+        if (first == 0)
+            parse_command(msg);
 
     }
     return NULL;
