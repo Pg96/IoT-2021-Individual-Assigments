@@ -23,6 +23,23 @@ Differently from the second assignment instead, now **The Things Network** is an
 The FIT/IoT-Lab Testbed node in the diagram includes the [ST B-L072Z-LRWAN1](https://www.iot-lab.info/docs/boards/st-b-l072z-lrwan1/) ndoes.
 
 ### 1.3 Performance Evaluation
+It was not possible to evaluate the performance of the nodes, as [ST B-L072Z-LRWAN1](https://www.iot-lab.info/docs/boards/st-b-l072z-lrwan1/) nodes do not offer the possibility to measure their consumptions (after running an experiment with 3 nodes and a consumption monitoring profile attached to each of them, the result of the monitoring was an **empty folder**, as in `./performance/perf_3.zip`).
+<!-- The performance of the system was measured using the consumption monitoring tools offered by the FIT/IoT-Lab facility.
+
+3 [ST B-L072Z-LRWAN1](https://www.iot-lab.info/docs/boards/st-b-l072z-lrwan1/) nodes were used during the tests:
+
+For the sake of time, the test's duration was set to 19 minutes, with a 5 minute interval between the sensing phases.
+
+* power_saver6 and power_saver5 ran the usual firmware.
+* power_saver3 ran a modified version of the firmware where the device does not perform the "edge check" mentioned above, thus sending a message every time it sensed the environment, therefore its power consumption should be higher than the two other nodes.
+
+**Consumptions**
+power_saver6
+
+power_saver5
+
+power_saver3 -->
+
 
 ## 2. Hands-on Walkthrough
 ### IoT-Lab Setup
