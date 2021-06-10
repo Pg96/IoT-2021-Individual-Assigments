@@ -129,11 +129,11 @@ void send(char* message) {
     size_t outl;
     //printf("Trying to encode the message (len: %u )...\n", inl);
     char *encoded = base64_encode(message, inl, &outl);
-    printf("Result: %s (%u )\n", encoded, outl);
+    printf("Result: %s (%u)\n", encoded, outl);
     /* send the message here */
     uint8_t status = semtech_loramac_send(&loramac,
                              (uint8_t *)message, strlen(message));
-    printf("Status: %u\n", status);
+    //printf("Status: %u\n", status);
 
     if (status != SEMTECH_LORAMAC_TX_DONE) {
         printf("Cannot send message '%s'\n", message);
@@ -239,7 +239,7 @@ int parse_command(char *command) {
         else if (strcmp(keyString, "acts") == 0) {
             int val = parse_val(tokens[i + 1], command);
 
-            printf("Activations: %d\n", val);
+            //printf("Activations: %d\n", val);
 
             activations = val;
         } else if (strcmp(keyString, "lux") == 0) {
@@ -487,8 +487,7 @@ void *main_loop(void *arg) {
         //puts("msg2 received\n");
 
 
-        // TODO: may need to split these 2 (due to limited data that can be sent) [ PROB NOT ]
-        printf("%lu %lu %lu\n", temp_high_threshold, temp_low_threshold, lux_threshold);
+        //printf("%lu %lu %lu\n", temp_high_threshold, temp_low_threshold, lux_threshold);
         if ((temp > temp_high_threshold || temp < temp_low_threshold) || lux >= lux_threshold) { // EDGE CHECK
             char core_str[100];
 
