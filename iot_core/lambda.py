@@ -66,7 +66,7 @@ def lambda_handler(event, context):
 
 #topic='awsiot_to_localgateway',
 
-        reply_payload = json.dumps({"id":str(id), "acts":"2", "lux":str(enable_lux), "led":str(led_code)})
+        reply_payload = json.dumps({"id":str(id), "acts":"5", "lux":str(enable_lux), "led":str(led_code), "lux_t":str(LUX_THRESHOLD), "temp_ht":str(TEMPHIGH_THRESHOLD), "temp_lt":str(TEMPLOW_THRESHOLD)})
         reply_payload_b = reply_payload.encode("utf-8")
         reply_payload_dec = base64.b64encode(reply_payload_b)
         repl_p = reply_payload_dec.decode("utf-8")
