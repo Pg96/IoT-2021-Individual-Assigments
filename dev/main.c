@@ -254,7 +254,7 @@ int parse_command(char *command) {
                 return 0;
             }
             else {
-                puts("Message for me received.")
+                puts("Message for me received.");
             }
         }
 
