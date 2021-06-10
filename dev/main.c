@@ -103,7 +103,6 @@ static void *_recv(void *arg) {
         /* blocks until a message is received */
 
         if (first == 1) {
-            first = 0;
             continue;
         }
 
@@ -116,13 +115,15 @@ static void *_recv(void *arg) {
         char * msg = (char *)loramac.rx_data.payload;
         size_t inl = strlen(msg);
 
-        printf("Processing message: %s (len = %u) \n", msg, inl);
+        //printf("Processing message: %s (len = %u) \n", msg, inl);
         
         parse_command(msg);
 
     }
     return NULL;
 }
+
+int sec = 0;
 
 void send(char* message) {
     //printf("VALUE: %d\n", val);
@@ -147,6 +148,11 @@ void send(char* message) {
         printf("Cannot send message '%s'\n", message);
     } else {
         printf("Message '%s' sent\n", message);
+
+        if (sec == 1) {
+            first = 1;
+        }
+        sec = 1;
     }
 }
 
