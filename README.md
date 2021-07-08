@@ -27,8 +27,7 @@ Differently from the second assignment instead, now **The Things Network** is an
 The FIT/IoT-Lab Testbed node in the diagram includes the [ST B-L072Z-LRWAN1](https://www.iot-lab.info/docs/boards/st-b-l072z-lrwan1/) ndoes.
 
 ### 1.3 Performance Evaluation
-It was not possible to evaluate the performance of the nodes, as [ST B-L072Z-LRWAN1](https://www.iot-lab.info/docs/boards/st-b-l072z-lrwan1/) nodes do not offer the possibility to measure their consumptions (after running an experiment with 3 nodes and a consumption monitoring profile attached to each of them, the result of the monitoring was an **empty folder**, as in `./performance/perf_3.zip`).
-
+It was not possible to evaluate the performance of the nodes, as [ST B-L072Z-LRWAN1](https://www.iot-lab.info/docs/boards/st-b-l072z-lrwan1/) nodes ~~do not offer the possibility to measure their consumptions (after running an experiment with 3 nodes and a consumption monitoring profile attached to each of them, the result of the monitoring was an **empty folder**, as in `./performance/perf_3.zip`).~~
 *Update: after contacting the FIT/IoT-Lab admins, I found out that only a subset of st-lrwan1 nodes allow to measure the power consumptions, however as it can be seen in the messages on the course Slack channel, the lora gateway of FIT/IoT-lab does not work any more, therefore it was not possible to carry out the performance evaluation phase as of today.*
 <!-- The performance of the system was measured using the consumption monitoring tools offered by the FIT/IoT-Lab facility.
 
