@@ -5,7 +5,7 @@ Web dashboard: https://dev867.dyaycgfnuds5z.amplifyapp.com/
 
 ## 0. Blog post and Demo
 * [**Blog post**](https://1701568-iot.blogspot.com/2021/06/3rd-assignment-blog-post.html)
-* [**Demo**] *WIP*
+* [**Demo**](https://youtu.be/F5hHvJlyssI)
 
 ## 1. Questions
 ### 1.1 How is the long-range low-power wide are network going to affect the IoT platform?
